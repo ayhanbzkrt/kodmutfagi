@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>AI’Han Kod Mutfağı 6.0 — Gelişmiş Tarayıcı Kod Ortamı</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1e343d;
+      --muted: #667f87;
+      --accent: #176b73;
+      --accent-deep: #0e4b53;
+      --sky: #e7f6f6;
+      --line: #dce7e8;
+      --paper: #fcfdfd;
+      --shell: #f5f9f9;
+      --editor: #ffffff;
+      --head-height: 76px;
+      --workspace-left: 52%;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-width: 320px; width: 100%; height: 100%; margin: 0; }
+    body { background: var(--shell); color: var(--ink); overflow: hidden; }
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, input:focus-visible + span { outline: 2px solid #32949d; outline-offset: 3px; }
+    button:disabled { opacity: .45; cursor: default; }
+    .app { height: 100dvh; min-height: 550px; display: flex; flex-direction: column; }
+    .topbar { flex: 0 0 auto; min-height: var(--head-height); display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 11px 26px; background: white; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; min-width: 0; gap: 13px; }
+    .brand-mark { width: 44px; height: 44px; flex: 0 0 44px; display: grid; place-items: center; background: #ddf2f0; color: var(--accent-deep); border: 1px solid #c4e4e1; border-radius: 13px; font: 750 16px var(--mono); letter-spacing: -2.4px; padding-right: 3px; }
+    .brand h1 { font-size: 19px; letter-spacing: -.65px; margin: 0; font-weight: 760; line-height: 1.15; }
+    .brand p { color: var(--muted); font-size: 11.5px; letter-spacing: .035em; margin: 4px 0 0; font-weight: 500; }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 37px; padding: 8px 12px; background: white; color: #365660; border: 1px solid var(--line); border-radius: 9px; line-height: 1; font-size: 12.5px; font-weight: 650; white-space: nowrap; transition: background .14s, border-color .14s, transform .14s; }
+    .btn:hover { background: #edf7f7; border-color: #c8dfdf; }
+    .btn:active { transform: translateY(1px); }
+    .btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
+    .btn.primary { color: white; border-color: var(--accent); background: var(--accent); padding-inline: 17px; }
+    .btn.primary:hover { background: var(--accent-deep); }
+    .btn.quiet { border-color: transparent; background: transparent; }
+    .btn.quiet:hover { background: var(--sky); }
+    .auto-toggle { display: flex; align-items: center; gap: 8px; padding: 4px 7px 4px 8px; user-select: none; cursor: pointer; font-size: 12px; font-weight: 570; white-space: nowrap; color: #607780; }
+    .auto-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .switch-track { position: relative; display: inline-block; width: 32px; height: 19px; background: #cbd9da; border-radius: 20px; transition: background .18s; }
+    .switch-track::after { content: ''; position: absolute; width: 13px; height: 13px; top: 3px; left: 3px; border-radius: 50%; background: white; box-shadow: 0 1px 2px #0002; transition: transform .18s; }
+    .auto-toggle input:checked + .switch-track { background: #33868c; }
+    .auto-toggle input:checked + .switch-track::after { transform: translateX(13px); }
+    .workspace { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(300px, var(--workspace-left)) 8px minmax(300px, 1fr); }
+    .editor-side, .preview-side { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .editor-side { background: var(--editor); }
+    .preview-side { background: #f0f5f5; }
+    .workspace-grip { position: relative; background: #e5eded; border-inline: 1px solid #d7e3e3; cursor: col-resize; touch-action: none; }
+    .workspace-grip::after { content: ''; position: absolute; width: 3px; height: 48px; background: #adc8c8; left: 2px; top: 50%; transform: translateY(-50%); border-radius: 5px; }
+    .workspace-grip:hover { background: #d4e8e8; }
+    .subhead { flex: 0 0 auto; padding: 12px 18px 11px; min-height: 60px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); background: #fcfefe; }
+    .section-label { display: flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .005em; color: var(--muted); font-weight: 700; }
+    .section-label svg { width: 15px; height: 15px; color: #597e83; }
+    .mode-group { display: inline-flex; border: 1px solid #d7e5e6; padding: 3px; border-radius: 9px; background: #f2f7f7; }
+    .mode-btn { border: 0; border-radius: 6px; background: transparent; color: #5a7279; font-size: 12px; font-weight: 640; padding: 7px 10px; white-space: nowrap; }
+    .mode-btn.active { color: #12555d; background: white; box-shadow: 0 1px 3px #1e45451b; }
+    .filebar { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 47px; padding: 0 14px; border-bottom: 1px solid var(--line); background: #fff; }
+    .tabs { display: flex; gap: 2px; align-self: stretch; min-width: 0; }
+    .tab { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border: 0; border-bottom: 2px solid transparent; color: #71888f; background: transparent; font: 700 12px var(--mono); }
+    .tab:hover { color: #244e57; background: #f4fafa; }
+    .tab.active { color: var(--accent-deep); border-color: var(--accent); }
+    .tab[hidden] { display: none; }
+    .tab-dot { width: 6px; height: 6px; border-radius: 2px; background: #77aaad; }
+    .tab[data-lang="css"] .tab-dot { background: #76a8cd; }
+    .tab[data-lang="js"] .tab-dot { background: #d3ae70; }
+    .file-actions { display: flex; align-items: center; gap: 4px; }
+    .file-actions .btn { min-height: 30px; padding: 5px 8px; font-size: 11.6px; }
+    .code-screen { min-height: 0; flex: 1 1 auto; position: relative; background: var(--editor); overflow: hidden; }
+    .editor-gutter { width: 56px; position: absolute; top: 0; bottom: 0; left: 0; overflow: hidden; background: #f9fbfb; border-right: 1px solid #edf1f1; color: #9aacb0; user-select: none; text-align: right; pointer-events: none; }
+    .line-numbers { padding: 19px 12px 50px 0; margin: 0; font: 13px/24px var(--mono); white-space: pre; will-change: transform; }
+    .code-region { position: absolute; left: 56px; right: 0; top: 0; bottom: 0; overflow: hidden; }
+    .highlight-layer, #sourceEditor { position: absolute; inset: 0; margin: 0; border: 0; width: 100%; height: 100%; padding: 19px 20px 60px 22px; font: 13px/24px var(--mono); letter-spacing: 0; white-space: pre; overflow: auto; tab-size: 2; text-align: left; }
+    .highlight-layer { z-index: 0; pointer-events: none; overflow: hidden; color: #253c45; scrollbar-width: none; will-change: transform; }
+    #sourceEditor { z-index: 1; display: block; background: transparent; color: transparent; -webkit-text-fill-color: transparent; caret-color: #135e69; resize: none; outline: none; overflow-wrap: normal; overflow-x: auto; border-radius: 0; }
+    #sourceEditor::selection { background: #addadf99; }
+    .tok-tag { color: #176f85; }
+    .tok-attr { color: #a05b44; }
+    .tok-string { color: #7a8350; }
+    .tok-key { color: #6c67af; }
+    .tok-comment { color: #99a6ab; font-style: italic; }
+    .tok-number { color: #c36a3f; }
+    .tok-color { color: #b16975; }
+    .tok-punc { color: #84969b; }
+    .editor-footer { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 16px; min-height: 36px; border-top: 1px solid var(--line); background: #fbfdfd; color: #70878c; font: 11px var(--mono); }
+    .editor-footer strong { color: #51747a; font-weight: 600; }
+    .preview-top { flex: 0 0 auto; min-height: 60px; padding: 12px 17px; border-bottom: 1px solid var(--line); background: #fcfefe; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .preview-right { display: flex; align-items: center; gap: 8px; }
+    .device-group { display: inline-flex; align-items: center; gap: 2px; background: #f0f6f6; border: 1px solid #e1ebeb; padding: 3px; border-radius: 9px; }
+    .device-btn { min-width: 31px; height: 29px; border: 0; border-radius: 6px; display: inline-grid; place-items: center; background: transparent; color: #84989d; }
+    .device-btn svg { width: 16px; height: 16px; }
+    .device-btn.active { color: var(--accent-deep); background: white; box-shadow: 0 1px 3px #2445451b; }
+    .preview-viewport { min-height: 0; flex: 1 1 auto; overflow: auto; display: flex; justify-content: center; padding: 15px; background-image: radial-gradient(#cadcdd 0.75px, transparent 0.75px); background-size: 19px 19px; }
+    .frame-holder { background: white; display: flex; flex-direction: column; height: 100%; min-height: 260px; width: 100%; max-width: 100%; box-shadow: 0 2px 17px #24434712; border: 1px solid #dbe5e5; border-radius: 6px; overflow: hidden; transition: width .2s ease; }
+    .frame-holder[data-device="tablet"] { width: min(768px, 100%); }
+    .frame-holder[data-device="mobile"] { width: min(390px, 100%); }
+    .frame-topline { height: 4px; flex: 0 0 4px; background: linear-gradient(90deg,#a7ddd7 0%,#b6d7e7 50%,#d5e3d3 100%); }
+    #previewFrame { width: 100%; flex: 1 1 auto; border: 0; display: block; background: white; }
+    .console-block { flex: 0 0 auto; border-top: 1px solid #d7e4e4; background: white; display: flex; flex-direction: column; max-height: 38%; min-height: 39px; }
+    .console-header { min-height: 39px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 15px; }
+    .console-title { border: 0; background: transparent; display: flex; align-items: center; gap: 8px; color: #567179; font: 650 11.5px var(--mono); padding: 8px 0; }
+    .console-title svg { width: 14px; height: 14px; }
+    .console-title .chev { transition: transform .15s; }
+    .console-block.collapsed .console-title .chev { transform: rotate(-90deg); }
+    .counter { display: inline-flex; align-items: center; justify-content: center; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; color: #607980; background: #edf4f4; font: 11px var(--mono); }
+    .counter.error { background: #feefeb; color: #a34534; }
+    .console-rows { max-height: 180px; min-height: 65px; overflow-y: auto; border-top: 1px solid #f0f3f3; }
+    .console-block.collapsed .console-rows { display: none; }
+    .logrow { display: flex; gap: 9px; align-items: flex-start; padding: 7px 16px; border-bottom: 1px solid #f4f6f6; font: 11.5px/1.5 var(--mono); overflow-wrap: anywhere; }
+    .logrow .level { font-weight: 700; width: 35px; flex: 0 0 35px; color: #8ca0a5; font-size: 10px; margin-top: 1px; }
+    .logrow.error { background: #fff6f3; color: #a34336; }
+    .logrow.warn { background: #fffaf0; color: #956d33; }
+    .logrow.info { color: #386a86; }
+    .console-empty { padding: 15px 16px; color: #a3b2b6; font: 11px var(--mono); }
+    /* Bağlantılar belge akışında kalır; hiçbir modülün üstüne sabitlenmez. */
+    .bottom { flex: 0 0 auto; padding: 10px 18px 12px; background: white; border-top: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #657d84; font-size: 11px; line-height: 1.5; text-align: center; }
+    .footer-links { display: flex; justify-content: center; align-items: center; gap: 6px 17px; flex-wrap: wrap; max-width: 100%; }
+    .bottom a { color: #125d67; text-decoration: none; text-underline-offset: 3px; font-weight: 600; }
+    .bottom a:hover, .bottom a:focus-visible { text-decoration: underline; }
+    .footer-copyright { margin: 0; max-width: 1200px; overflow-wrap: anywhere; }
+    .bottom .privacy { font-size: 10px; color: #7c969a; white-space: normal; }
+    @media (max-width: 760px) { .bottom { gap: 9px; padding: 13px 12px 16px; } .footer-links { column-gap: 15px; row-gap: 9px; } .footer-links a { display: inline-block; min-height: 22px; } }
+    .sr-only { position: absolute; height: 1px; width: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .toast { pointer-events: none; position: fixed; bottom: 57px; left: 50%; transform: translate(-50%,15px); opacity: 0; background: #225a61; border-radius: 8px; padding: 10px 16px; color: white; font: 600 12px inherit; box-shadow: 0 12px 35px #123d462e; z-index: 30; transition: opacity .2s, transform .2s; }
+    .toast.show { opacity: 1; transform: translate(-50%,0); }
+    .modal-backdrop { display: none; position: fixed; inset: 0; z-index: 50; background: #12394268; align-items: center; justify-content: center; padding: 20px; }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(460px,100%); padding: 26px; border-radius: 14px; background: white; box-shadow: 0 20px 80px #06273542; }
+    .modal h2 { font-size: 18px; margin: 0 0 9px; }
+    .modal p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .modal-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* Python editörü ve çalıştırma çıktıları */
+    .mode-python { font-family: var(--mono); font-weight: 750; }
+    [hidden] { display:none !important; }
+    .tab[data-lang="py"] .tab-dot { background: #529c7d; }
+    .python-viewport { min-height:0; flex:1 1 auto; display:flex; flex-direction:column; background:#fbfefe; overflow:hidden; }
+    .python-viewport[hidden] { display:none; }
+    #stopPython[hidden], #newTab[hidden], .console-block[hidden], .preview-viewport[hidden], .device-group[hidden], #convertButton[hidden] { display:none !important; }
+    .python-intro { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 16px; padding:15px 19px 12px; border-bottom:1px solid #e4eded; }
+    .python-intro strong { font-size:13px; font-weight:720; color:#27525b; }
+    .python-intro span { font-size:11px; color:#6b878c; line-height:1.55; }
+
+    /* Python: Türkçe hata rehberi ve satır hedefi */
+    .py-check-tools {padding:8px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #e3eeed;background:#fff;}
+    .py-check-tools .btn {font-size:11px;}
+    #syntaxFeedback {font-size:11px;color:#49787a;line-height:1.5;}
+    .py-diagnostic {flex:0 1 auto;max-height:49vh;overflow:auto;padding:13px 18px 15px;background:#fffafa;border-bottom:2px solid #d89388;color:#3e4448;}
+    .py-diagnostic-head {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .py-diagnostic-title {font-size:14px;font-weight:800;color:#994034;}
+    .py-diagnostic-position {font:700 11px var(--mono);color:#8b625e;}
+    .py-diagnostic p {margin:8px 0;font-size:12px;line-height:1.65;}
+    .py-diagnostic strong {color:#8d4c40;}
+    .py-diagnostic-code {margin:9px 0 7px;padding:10px 12px;overflow-x:auto;background:#fff;border-left:3px solid #c46c5c;font:12px/1.65 var(--mono);color:#203f47;white-space:pre;tab-size:4;}
+    .py-diagnostic-code .under-error {background:rgba(208,97,77,.22);border-bottom:2px solid #ba5142;}
+    .py-diagnostic-proposal {background:#f2faf6;border-left:3px solid #408f77;padding:9px 12px;font:12px/1.55 var(--mono);white-space:pre-wrap;color:#255750;margin:10px 0;}
+    .py-diagnostic-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:0;z-index:2;background:#fffafa;padding:7px 0;}
+    .py-diagnostic-actions .btn {font-size:11px;min-height:31px;}
+    .trace-line-wash.is-error {background:rgba(215,92,73,.16)!important;border-left-color:#c55442!important;}
+    .editor-gutter-mark.is-error {background:#ba4b3c!important;}
+    @media(max-width:760px){
+      .preview-side:has(#pythonViewport:not([hidden])) {height:auto;min-height:0;overflow:visible;}
+      .preview-side:has(#pythonViewport:not([hidden])) #pythonViewport {overflow:visible;flex:0 0 auto;}
+      .py-diagnostic {max-height:none;flex:0 0 auto;overflow:visible;padding:11px 12px;}
+      .py-diagnostic-actions {position:static;}
+      .py-check-tools{padding:7px 12px;}
+      .python-output {flex:0 0 auto;min-height:170px;max-height:360px;overflow:auto;}
+      .learning-view,.missions-view {flex:0 0 auto;max-height:700px;min-height:330px;overflow-y:auto;}
+    }
+    .python-output { flex:1 1 auto; min-height:100px; padding:15px 18px 24px; overflow:auto; font:13px/1.65 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; color:#29444c; background:#fcfefe; }
+    .python-welcome { font:12px/1.85 var(--mono); color:#768e94; white-space:normal; max-width:540px; }
+    .python-out-line { padding:1px 0; white-space:pre-wrap; }
+    .python-out-line.py-error { color:#ad443a; }
+    .python-out-line.py-status { color:#587d83; font-style:italic; }
+    .python-figures { flex: 0 1 auto; min-height:0; max-height:45%; overflow:auto; border-top:1px solid #e1eded; padding:14px 17px; background:#fff; }
+    .python-figures[hidden] { display:none; }
+    .python-figures img { max-width:100%; height:auto; display:block; margin:0 auto 12px; border:1px solid #edf0f0; }
+    .python-figure-label { display:block; font:700 10px var(--mono); color:#789096; margin:0 0 7px; letter-spacing:.07em; }
+    .python-input-wrap { flex: 0 0 auto; border-top:1px solid var(--line); padding:11px 17px 13px; background:#f6fbfb; }
+    .python-input-wrap label { display:flex; align-items:center; gap:10px; flex-wrap:wrap; color:#315a61; font-size:12px; font-weight:700; margin-bottom:7px; }
+    .python-input-wrap label span { color:#81989d; font-size:10.5px; font-weight:450; }
+    #pythonInput { width:100%; height:55px; resize:vertical; min-height:42px; max-height:140px; background:white; border:1px solid #d4e5e4; border-radius:7px; padding:9px 11px; font:12px/1.5 var(--mono); color:#2e4950; }
+    .python-hint { margin-top:7px; max-width:760px; color:#81969b; line-height:1.55; font-size:10.5px; }
+    .python-viewport .python-intro { flex:0 0 auto; }
+    .python-runtime-tools, .python-package-tools { padding:8px 16px;display:flex;gap:9px;align-items:center;border-bottom:1px solid #e4eded;flex-wrap:wrap;background:#fff; }
+    .python-runtime-tools label, .python-package-tools label { color:#466b70;font-size:11px;font-weight:750;white-space:nowrap; }
+    .python-runtime-tools select, .python-package-tools input { padding:8px 10px;border:1px solid #cfdddd;border-radius:7px;background:#fff;color:#284650;font:12px var(--mono);min-width:0; }
+    .python-runtime-tools select { flex:1 1 200px;max-width:350px; }
+    .python-package-tools input { flex:1 1 150px; }
+    .python-runtime-tools .btn, .python-package-tools .btn { min-height:31px;font-size:11px; }
+    .python-engine-help { border-bottom:1px solid #e4eded;padding:8px 17px;color:#697f85;background:#f7fbfb;font-size:10.5px;line-height:1.55; }
+    .python-output .python-out-line.py-error { white-space:pre-wrap; }
+    .python-out-line.py-status { font-style:normal; }
+    @media (max-width:760px) { .python-runtime-tools,.python-package-tools {padding:7px 12px;} .python-engine-help {padding:7px 12px;} }
+    @media (max-width:760px) {
+      .mode-group { max-width:100%; }
+      .mode-btn { padding:7px 7px; font-size:10.5px; }
+      .python-intro { padding:10px 13px; }
+      .python-output { padding:10px 13px; }
+      .python-input-wrap { padding:8px 12px; }
+    }
+    @media (max-width: 1060px) {
+      .topbar { padding-inline: 17px; gap: 10px; }
+      .brand p { display: none; }
+      .header-actions { gap: 5px; }
+      .btn-label-compact { display: none; }
+      .subhead { padding-inline: 12px; }
+      .preview-top { padding-inline: 12px; }
+      .bottom .privacy { display: block; }
+    }
+    @media (max-width: 760px) {
+      body { overflow: auto; }
+      .app { min-height: 100dvh; height: auto; }
+      .topbar { padding: 11px 12px; }
+      .brand { gap: 8px; }
+      .brand-mark { width: 35px; height: 35px; flex-basis: 35px; font-size: 13px; }
+      .brand h1 { font-size: 15px; }
+      .header-actions .btn { padding-inline: 9px; min-height: 35px; }
+      .auto-toggle { padding-inline: 1px; }
+      .auto-toggle .auto-text { display: none; }
+      .workspace { display: flex; flex-direction: column; }
+      .workspace-grip { display: none; }
+      .editor-side { height: 52vh; min-height: 360px; flex: none; }
+      .preview-side { height: 60vh; min-height: 430px; flex: none; border-top: 5px solid #e2eeee; }
+      .filebar { padding-inline: 8px; }
+      .tab { padding-inline: 12px; }
+      .bottom { padding: 10px 12px; }
+    }
+    @media (max-width: 400px) {
+      .brand h1 { font-size: 14px; }
+      .header-actions { gap: 2px; }
+      .header-actions .btn { padding-inline: 8px; }
+      .header-actions #saveProject { display: inline-flex; font-size: 10px; padding-inline: 7px; }
+      .section-label { display: none; }
+      .preview-top .section-label { display:flex; font-size:10px; }
+      .preview-top .section-label svg { display:none; }
+      .subhead { justify-content: center; }
+      .device-group { gap: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.001ms !important; } }
+
+    /* AI’Han Python öğrenme akışı: açık, tipografik, gerçek yürütme kaydı */
+    [hidden] { display:none !important; }
+    .py-section-tabs { display:flex;gap:2px;flex-wrap:wrap;align-items:center; padding:7px 14px;flex:0 0 auto;border-bottom:1px solid #dce9e7;background:#f8fbfb; }
+    .py-tab { background:transparent;border:none;border-bottom:2px solid transparent;padding:9px 12px;font-size:11.5px;color:#658087;font-weight:700; }
+    .py-tab.selected {color:#155b61;border-bottom-color:#338e90;}
+    .py-action { margin-left:auto;background:#16646a;border:1px solid #16646a;border-radius:7px;color:white;font-weight:700;padding:8px 12px;font-size:11px; }
+    .py-action:hover {background:#0f5258;}
+    .learning-view,.missions-view { min-height:0; flex:1 1 auto; overflow-y:auto; background:#fff; color:#274249; }
+    .learn-note { padding:12px 17px 10px; border-bottom:1px solid #edf2f1; color:#597a81; font-size:11px; line-height:1.65; }
+    .learn-controls { position:sticky;top:0;z-index:2; display:flex;align-items:center;flex-wrap:wrap;gap:7px;background:#fff;border-bottom:1px solid #dce9e7;padding:11px 16px; }
+    .learn-controls .btn {min-height:31px;padding:7px 10px;}
+    #traceCounter {font:700 11px var(--mono);margin-left:auto;color:#426b72;}
+    #traceSpeed {border:1px solid #d6e5e6;background:#fff;color:#315b62;border-radius:6px;padding:6px 5px;font-size:11px;}
+    .trace-slider-line {padding:0 17px 13px;border-bottom:1px solid #e8f0ef;}
+    #traceSlider {width:100%;accent-color:#18747a;cursor:pointer;}
+    .trace-focus {padding:17px 19px 10px;}
+    .trace-label {font:750 10px var(--mono);color:#6e9294;text-transform:uppercase;letter-spacing:.075em;}
+    .trace-code-line {margin:11px 0; border-left:3px solid #3d9b97; background:#f4faf9;padding:12px 13px;font:13px/1.55 var(--mono);white-space:pre-wrap; overflow-wrap:anywhere;color:#183b44;}
+    .trace-explain {font-size:14px;font-weight:600;line-height:1.7;color:#254c54;margin:9px 0 6px;}
+    .trace-scope {font-size:11px;color:#728c91;}
+    .trace-details {display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);border-top:1px solid #e9efef;border-bottom:1px solid #e9efef;}
+    .trace-details section {min-width:0;padding:14px 18px;}
+    .trace-details section+section {border-left:1px solid #e9efef;}
+    .trace-details h3 {font:700 11px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:#577d83;margin:0 0 10px;}
+    .trace-diff {display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font:11px/1.8 var(--mono);border-bottom:1px dotted #e1eceb;padding:4px 0;word-break:break-word;}
+    .trace-diff strong {color:#225c67;font-weight:800;}
+    .trace-before {color:#9e5f61;}
+    .trace-after {color:#16766e;font-weight:700;}
+    #traceStepOutput {margin:0;max-height:170px;overflow:auto;color:#31515b;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.7 var(--mono);}
+    #traceError {border-left:3px solid #c36e61;background:#fff8f5;padding:10px 12px;color:#a24b3d;font-size:12px;line-height:1.65;margin:8px 18px 15px;white-space:pre-wrap;}
+    .trace-predict {padding:16px 18px;background:#f7fbfa;border-top:1px solid #e3eeed;}
+    .trace-predict p {margin:7px 0;font-size:12px;line-height:1.55;color:#40676f;}
+    .trace-predict-bar {display:flex;gap:8px;flex-wrap:wrap;}
+    #traceAnswer {min-width:120px;flex:1 1 130px;max-width:320px;border:1px solid #cddfdf;border-radius:7px;font:12px var(--mono);padding:8px 10px;background:white;color:#284953;}
+    #traceFeedback {font-size:11px;line-height:1.7;color:#2d6567;display:block;margin-top:7px;min-height:14px;}
+    .trace-caveat {margin:0;padding:12px 18px 20px;color:#869a9d;font-size:10.5px;line-height:1.65;}
+    .trace-empty {padding:32px 21px;text-align:left;max-width:540px;line-height:1.8;color:#6f8a8e;font-size:12px;}
+    .trace-empty h3 {margin:0 0 12px;color:#27545b;font-size:16px;}
+    .mission-heading {padding:20px 20px 9px;}
+    .mission-heading h2 {font-size:17px;margin:0 0 6px;}
+    .mission-heading p {font-size:12px;line-height:1.65;color:#769095;margin:0;}
+    .mission-list {margin:0;padding:6px 15px 8px;list-style:none;}
+    .mission-list li+li {border-top:1px solid #e7eeee;}
+    .mission-list button {width:100%;display:flex;gap:10px;align-items:center;text-align:left;padding:12px 5px;border:0;background:transparent;color:#315860;font-weight:650;font-size:12px;line-height:1.4;}
+    .mission-list button:hover,.mission-list button[aria-current=true] {color:#146773;background:#f1f9f7;}
+    .mission-number {font:800 11px var(--mono);color:#65a7a3;width:24px;}
+    .mission-list small {color:#799194;font-size:10.5px;font-weight:400;display:block;margin-top:4px;}
+    .mission-body {padding:16px 20px 23px;border-top:1px solid #e3edeb;}
+    .mission-body h3 {margin:0 0 9px;font-size:15px;color:#255e61;}
+    .mission-body p {font-size:12px;line-height:1.8;color:#4d6f74;margin:0 0 10px;}
+    .mission-body code {font:11.5px var(--mono);background:#edf8f6;padding:2px 4px;}
+    #missionFeedback {font-size:12px;font-weight:600;line-height:1.7;padding-top:10px;color:#267b71;}
+    .trace-line-wash {position:absolute;pointer-events:none;left:0;right:0;height:24px;background:rgba(71,178,160,.16);border-left:3px solid #31a08f;z-index:0;display:none;}
+    .editor-gutter-mark {position:absolute;pointer-events:none;right:2px;height:24px;width:49px;background:#dbf3eb;border-right:2px solid #3eaa99;display:none;}
+    .code-region .highlight-layer {z-index:1;}
+    .code-region #sourceEditor {z-index:2;}
+    @media (max-width:1090px) { .trace-details {grid-template-columns:1fr;}.trace-details section+section{border-left:0;border-top:1px solid #e9efef;} }
+    @media (max-width:760px) { .preview-side:has(.learning-view:not([hidden])) {height:75vh;min-height:540px;} .python-intro{padding:8px 12px;}.py-section-tabs{padding:6px 9px;}.py-tab{padding:8px 7px;font-size:10.6px;}.py-action{padding:7px 8px;font-size:10px;} .learn-controls{padding:8px 10px;}.trace-focus{padding:12px;} }
+
+    .code-map {margin:0;border-top:1px solid #dbe9e7;border-bottom:1px solid #dbe9e7;padding:0 17px;}
+    .code-map summary {cursor:pointer;font-size:12px;color:#226068;padding:13px 0;font-weight:720;}
+    .code-map ol {list-style:none;margin:0;padding:0 0 13px;}
+    .code-map li {display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:6px 10px;padding:9px 3px;border-top:1px dotted #e3eeee;}
+    .code-map .code-map-num {font:750 11px var(--mono);color:#77949a;}
+    .code-map .code-map-code {font:11.5px/1.5 var(--mono);color:#32545e;white-space:pre-wrap;overflow-wrap:anywhere;}
+    .code-map .code-map-help {grid-column:2/4;font-size:11px;line-height:1.6;color:#67838a;}
+    .code-map .code-map-count {color:#277269;font-size:10.5px;white-space:nowrap;}
+    .code-map .code-map-count.unused {color:#9ca6a7;}
+    .trace-current-values {font:11px/1.7 var(--mono);padding-top:11px;margin-top:8px;border-top:1px solid #e4eeec;color:#416e72;overflow-wrap:anywhere;}
+    .trace-current-values b {font:750 10px var(--mono);color:#6c898c;display:block;margin-bottom:4px;}
+  
+    .browser-engine{display:flex;flex-direction:column;gap:3px;color:#20434d;font-size:13px;min-width:0;flex:1}
+    .browser-engine small{font-size:11px;color:#59777e;line-height:1.5}
+    .python-out-line{overflow-wrap:anywhere}
+    @media(max-width:620px){.browser-engine{width:100%}.python-runtime-tools{flex-wrap:wrap}}
+
+
+    /* v6 - Full browser runtime extensions: unobtrusive tools, no dashboard UI */
+    .web-runtime-tools {display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 15px;border-bottom:1px solid var(--line);background:#faffff;font-size:11px;color:#58747a}
+    .web-runtime-tools[hidden] {display:none}
+    .web-runtime-tools label {display:flex;align-items:center;gap:6px;font-weight:650}
+    .web-runtime-tools select {font:12px var(--mono);background:white;color:#28505a;border:1px solid #cadede;border-radius:7px;padding:6px 7px;min-width:105px;max-width:165px}
+    .web-runtime-tools input {accent-color:#226c76;width:15px;height:15px}
+    .runtime-help {color:#6d858b;font-size:11px;line-height:1.4}
+    .package-line {padding:9px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #e3eded;color:#3a6870;font-size:11px;background:#f8fcfc}
+    .package-line[hidden]{display:none}
+    .package-progress {flex:1 1 140px;max-width:330px;height:5px;overflow:hidden;background:#dfebeb;border-radius:5px}
+    .package-progress>span {display:block;height:100%;width:0;background:#36858a;transition:width .2s}
+    .package-inline {display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .package-inline span {display:inline-block;border-radius:15px;border:1px solid #d6e8e7;padding:3px 8px;font:10px var(--mono);color:#3d6d74;background:white}
+    .package-inline span[aria-invalid="true"]{color:#a94f42;border-color:#efd9d2}
+    .web-runtime-status {min-width:0;max-width:100%;overflow-wrap:anywhere}
+    .browser-engine strong {color:#214f54}
+    #pythonPackages {max-width:300px}
+    @media(max-width:760px){.web-runtime-tools{padding:7px 11px;gap:8px}.web-runtime-tools select{min-width:95px}.package-line{padding:7px 12px;gap:8px}.runtime-help{width:100%}}
+    @media(max-width:480px){#saveProject{font-size:11px;min-height:31px;padding:5px 8px}.header-actions{gap:5px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand" aria-label="AI’Han Kod Mutfağı">
+      <div class="brand-mark" aria-hidden="true">&lt;/&gt;</div>
+      <div>
+        <h1>AI’Han Kod Mutfağı</h1>
+        <p>Yaz, çalıştır, anında gör. &nbsp; HTML · CSS · JavaScript · Python · Tamamen Tarayıcıda</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <label class="auto-toggle" title="Kod değiştirilince önizlemeyi otomatik yenile">
+        <span class="auto-text">Canlı çalıştır</span>
+        <input type="checkbox" id="autoRun" checked />
+        <span class="switch-track"></span>
+      </label>
+      <button class="btn" type="button" id="openFile" title="HTML veya AI’Han proje dosyası aç">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/><path d="M3 10h18"/></svg>
+        <span class="btn-label-compact">Dosya aç</span>
+      </button>
+      <input type="file" id="fileInput" accept=".html,.htm,.css,.js,.mjs,.jsx,.ts,.tsx,.py,.json,text/html,text/x-python,application/json" class="sr-only" />
+      <button class="btn" type="button" id="saveProject" title="HTML, CSS, JS ve Python kodlarını düzenlenebilir proje olarak indir">Proje kaydet</button>
+      <button class="btn" type="button" id="downloadHTML" title="Çalışır HTML dosyası indir">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 17v4h14v-4"/></svg>
+        HTML indir
+      </button>
+      <button class="btn primary" type="button" id="runButton" title="Çalıştır (Ctrl / Cmd + Enter)">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 12 7-12 7V5Z"/></svg>
+        Çalıştır
+      </button>
+    </div>
+  </header>
+
+  <main class="workspace" id="workspace">
+    <section class="editor-side" aria-label="Kod düzenleyici">
+      <div class="subhead">
+        <span class="section-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 5-6 7 6 7M16 5l6 7-6 7M14 3l-4 18"/></svg>
+          DÜZENLEYİCİ
+        </span>
+        <div class="mode-group" role="group" aria-label="Kod yazma biçimi">
+          <button type="button" class="mode-btn active" data-mode="split" aria-pressed="true">HTML / CSS / JS</button>
+          <button type="button" class="mode-btn" data-mode="single" aria-pressed="false">Tek HTML dosyası</button>
+          <button type="button" class="mode-btn mode-python" data-mode="python" aria-pressed="false">Python</button>
+        </div>
+      </div>
+      <div class="filebar">
+        <div class="tabs" role="tablist" aria-label="Kod dosyaları">
+          <button class="tab active" role="tab" type="button" data-lang="html" aria-selected="true"><span class="tab-dot"></span>HTML</button>
+          <button class="tab" role="tab" type="button" data-lang="css" aria-selected="false"><span class="tab-dot"></span>CSS</button>
+          <button class="tab" role="tab" type="button" data-lang="js" aria-selected="false"><span class="tab-dot"></span>JS</button>
+          <button class="tab" role="tab" type="button" data-lang="py" aria-selected="false" hidden><span class="tab-dot"></span>main.py</button>
+        </div>
+        <div class="file-actions">
+          <button class="btn quiet" id="examplesButton" title="Hazır örnek yükle" type="button">Örnek</button>
+          <button class="btn quiet" id="convertButton" title="Mevcut kodu diğer biçime aktar" type="button">Birleştir</button>
+          <button class="btn quiet" id="clearButton" title="Etkin kod alanını temizle" type="button">Temizle</button>
+        </div>
+      </div>
+      <div class="web-runtime-tools" id="webRuntimeTools">
+        <label for="jsFlavor">JavaScript <select id="jsFlavor" aria-label="JavaScript çalıştırma modu">
+          <option value="auto">Otomatik</option>
+          <option value="classic">Klasik JS</option>
+          <option value="module">ES Module</option>
+          <option value="jsx">JSX / React</option>
+          <option value="ts">TypeScript</option>
+          <option value="tsx">TSX / React</option>
+        </select></label>
+        <label title="Tailwind CSS 4 Play CDN, önizleme ve denemeler içindir"><input type="checkbox" id="tailwindEnable">Tailwind 4</label>
+        <span class="runtime-help" id="webRuntimeHint">ES Modules, CSS nesting, container queries ve modern tarayıcı API'leri desteklenir.</span>
+      </div>
+      <div class="code-screen">
+        <div class="editor-gutter" aria-hidden="true"><pre id="lineNumbers" class="line-numbers">1</pre><div class="editor-gutter-mark" id="traceGutterMark"></div></div>
+        <div class="code-region">
+          <div class="trace-line-wash" id="traceLineWash" aria-hidden="true"></div>
+          <pre id="highlight" class="highlight-layer" aria-hidden="true"></pre>
+          <textarea id="sourceEditor" autocomplete="off" autocapitalize="off" spellcheck="false" wrap="off" aria-label="Kod düzenleme alanı"></textarea>
+        </div>
+      </div>
+      <div class="editor-footer">
+        <span id="cursorInfo">Satır <strong>1</strong>, Sütun <strong>1</strong></span>
+        <span id="charCount">0 karakter</span>
+        <span>UTF-8 · Python: 4 boşluk</span>
+      </div>
+    </section>
+
+    <div class="workspace-grip" id="workspaceGrip" role="separator" aria-label="Düzenleyici ve önizleme genişliğini ayarla" aria-orientation="vertical" tabindex="0"></div>
+
+    <section class="preview-side" aria-label="Canlı önizleme">
+      <div class="preview-top">
+        <div class="section-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18m-14-3h.1m3 0h.1"/></svg>
+          <span id="previewHeading">ÖNİZLEME</span>
+          <span id="runState" style="font-weight:500;color:#86a1a6;margin-left:5px">Hazırlanıyor</span>
+        </div>
+        <div class="preview-right">
+          <div class="device-group" role="group" aria-label="Cihaz genişliği">
+            <button type="button" class="device-btn active" data-device="desktop" title="Masaüstü" aria-label="Masaüstü" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button>
+            <button type="button" class="device-btn" data-device="tablet" title="Tablet (768 px)" aria-label="Tablet" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 19h2"/></svg></button>
+            <button type="button" class="device-btn" data-device="mobile" title="Telefon (390 px)" aria-label="Telefon" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 19h2"/></svg></button>
+          </div>
+          <button class="btn quiet" type="button" id="stopPython" hidden title="Çalışan Python kodunu durdur veya oturumu sıfırla">Sıfırla</button>
+          <button class="btn quiet" type="button" id="newTab" title="Çalışmayı yeni sekmede aç" aria-label="Yeni sekmede aç"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h7v7m0-7-9 9"/><path d="M20 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h6"/></svg></button>
+        </div>
+      </div>
+      <div class="preview-viewport" id="previewViewport">
+        <div class="frame-holder" id="frameHolder" data-device="desktop">
+          <div class="frame-topline" aria-hidden="true"></div>
+          <iframe id="previewFrame" title="Kodun canlı çıktısı" sandbox="allow-scripts allow-forms allow-modals" referrerpolicy="no-referrer"></iframe>
+        </div>
+      </div>
+      <div class="python-viewport" id="pythonViewport" hidden>
+        <div class="python-intro">
+          <strong>Python 3 · Etkileşimli Kod Eğitmeni</strong>
+          <span id="pythonRuntime">Python motoru henüz yüklenmedi</span>
+        </div>
+        <div class="python-runtime-tools">
+          <span class="browser-engine"><strong>Tarayıcı / Pyodide</strong><small>WebAssembly · Python kurulumu ve sunucu yok</small></span>
+          <button id="pythonHealth" class="btn quiet" type="button">Python motorunu hazırla</button>
+        </div>
+        <div class="python-package-tools">
+          <label for="pythonPackages">Ek paket (isteğe bağlı)</label>
+          <input id="pythonPackages" type="text" placeholder="Örn: seaborn altair" autocomplete="off" spellcheck="false" aria-label="Yüklenecek Python paketleri" />
+          <button id="installPackages" class="btn" type="button">Kur</button>
+        </div>
+        <div class="package-line" id="pythonAutoPackages">
+          <strong>Otomatik kütüphaneler</strong>
+          <div class="package-progress" role="progressbar" id="pyPackProgress" aria-label="Kütüphane hazırlığı" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="pyPackBar"></span></div>
+          <span id="pyPackLabel" class="web-runtime-status">Python sekmesi açıldığında paketler hazırlanır.</span>
+          <div class="package-inline" id="pyPackBadges"></div>
+        </div>
+        <div id="pythonEngineHelp" class="python-engine-help">NumPy, pandas, Matplotlib, SciPy, scikit-learn, Pillow, SymPy, Requests, Beautiful Soup ve NetworkX otomatik hazırlanır. Diğer uyumlu paketler import sırasında indirilir. İlk seferde internet ve indirme süresi gerekir; tüm masaüstü Python paketleri tarayıcıyla uyumlu değildir.</div>
+
+        <div class="py-check-tools">
+          <button class="btn" type="button" id="checkPythonSyntax">Sözdizimini denetle</button>
+          <span id="syntaxFeedback" aria-live="polite">Türkçe açıklama için Sözdizimini denetle düğmesini kullanın.</span>
+        </div>
+        <section class="py-diagnostic" id="pythonDiagnostic" aria-label="Python hatası ve Türkçe düzeltme önerisi" aria-live="polite" hidden>
+          <div class="py-diagnostic-head"><strong class="py-diagnostic-title" id="diagTitle"></strong><span class="py-diagnostic-position" id="diagPosition"></span></div>
+          <pre class="py-diagnostic-code" id="diagSnippet"></pre>
+          <p id="diagExplanation"></p><p><strong>Nasıl düzeltilir?</strong> <span id="diagSuggestion"></span></p>
+          <div class="py-diagnostic-proposal" id="diagProposal" hidden></div>
+          <div class="py-diagnostic-actions">
+            <button class="btn" type="button" id="diagGoToLine">Hatalı satıra git</button>
+            <button class="btn primary" type="button" id="diagApplyFix" hidden>Önerilen düzeltmeyi uygula</button>
+            <button class="btn quiet" type="button" id="diagClose">Açıklamayı kapat</button>
+          </div>
+        </section>
+
+        <nav class="py-section-tabs" aria-label="Python öğrenme görünümleri">
+          <button type="button" class="py-tab selected" data-pyview="output" aria-pressed="true">Çıktı &amp; konsol</button>
+          <button type="button" class="py-tab" data-pyview="learn" aria-pressed="false">Adım adım öğren</button>
+          <button type="button" class="py-tab" data-pyview="mission" aria-pressed="false">Alıştırmalar</button>
+          <button type="button" class="py-action" id="tracePython">Adımları hazırla</button>
+        </nav>
+        <div class="learning-view" id="learningView" hidden>
+          <div class="learn-note">Python kodu kontrollü olarak çalıştırılıp yürütülen satırlar kaydedilir. Sonra adımları ileri ve geri gezebilirsin. Döngülerde tekrarlanan satırlar ayrı ayrı gösterilir.</div>
+          <div id="traceEmpty" class="trace-empty"><h3>Kodun nasıl çalıştığını gör</h3><p>Soldaki Python kodunu yaz veya bir alıştırma seç. <b>Adımları hazırla</b> düğmesi kodu çalıştırır ve her satırın açıklamasını, değişkenlerdeki değişimi ve o satırdaki çıktıyı gösterir.</p></div>
+          <div id="traceContent" hidden>
+            <div class="learn-controls">
+              <button type="button" class="btn" id="traceFirst" title="İlk adım">Başa</button>
+              <button type="button" class="btn" id="tracePrev">Geri</button>
+              <button type="button" class="btn primary" id="traceNext">Sonraki adım</button>
+              <button type="button" class="btn" id="tracePlay">Oynat</button>
+              <select id="traceSpeed" aria-label="Adım oynatma hızı"><option value="1450">Yavaş</option><option value="800" selected>Normal</option><option value="360">Hızlı</option></select>
+              <span id="traceCounter">0 / 0</span>
+            </div>
+            <div class="trace-slider-line"><input id="traceSlider" type="range" min="1" max="1" value="1" aria-label="Yürütme adımını seç"></div>
+            <div class="trace-focus">
+              <span class="trace-label" id="traceFocusMeta">Satır —</span>
+              <div class="trace-code-line" id="traceCodeLine"></div>
+              <p class="trace-explain" id="traceExplain"></p>
+              <span class="trace-scope" id="traceScope"></span>
+            </div>
+            <div class="trace-details">
+              <section><h3>Değişkenler</h3><div id="traceVariableChanges"></div><div class="trace-current-values" id="traceCurrentValues"></div></section>
+              <section><h3>Bu satırın çıktısı</h3><pre id="traceStepOutput"></pre></section>
+            </div>
+            <div id="traceError" hidden></div>
+            <details class="code-map" id="traceCodeMap"><summary>Satır satır kod haritası — çalışan ve atlanan satırları incele</summary><ol id="traceMapList"></ol></details>
+            <div class="trace-predict" id="tracePredict" hidden>
+              <span class="trace-label">ÖNCE TAHMİN ET, SONRA KONTROL ET</span>
+              <p id="traceQuestion"></p>
+              <div class="trace-predict-bar"><input id="traceAnswer" type="text" autocomplete="off" placeholder="Tahminin" aria-label="Sonraki adım için tahminin"><button class="btn" id="traceCheck" type="button">Tahminimi kontrol et</button></div>
+              <span id="traceFeedback"></span>
+            </div>
+            <p class="trace-caveat">Değişken değerleri, gerçek Python çalışmasının kaydedilmiş özetidir. Kütüphane iç kodu, büyük nesneler ve 600 adımı aşan çalışmalar ayrıntılı izlenmez. Geri tuşu kodu geri çalıştırmaz; kaydedilen geçmişi gösterir.</p>
+          </div>
+        </div>
+        <div class="missions-view" id="missionsView" hidden>
+          <div class="mission-heading"><h2>Python alıştırmaları</h2><p>Bir hedef seç, kodu değiştir, çalıştır ve çıktını kontrol et. Hata yaparsan ilgili satırı adım adım inceleyebilirsin.</p></div>
+          <ol class="mission-list" id="missionList"></ol>
+          <div class="mission-body" id="missionBody"><h3>Alıştırma seç</h3><p>Yukarıdaki başlıklardan birini seçerek başla.</p></div>
+        </div>
+        <div class="python-output" id="pythonOutput" role="log" aria-live="polite">
+          <div class="python-welcome">Kodunuzu yazıp <b>Çalıştır</b> düğmesine basın. print() çıktıları ve hatalar burada görüntülenecek.</div>
+        </div>
+        <div class="python-figures" id="pythonFigures" hidden></div>
+        <div class="python-input-wrap">
+          <label for="pythonInput">input() için giriş verileri <span>Her satır ayrı bir yanıt olarak okunur.</span></label>
+          <textarea id="pythonInput" rows="2" spellcheck="false" placeholder="Örnek:&#10;Ayhan&#10;14"></textarea>
+          <div class="python-hint">Python kodu cihazınızın tarayıcısında çalışır. input() yanıtlarını yukarıdaki alana her satıra bir cevap gelecek şekilde girin. Durdur işlemi Python Worker’ını kapatır; sonraki çalıştırmada motor yeniden yüklenir.</div>
+        </div>
+      </div>
+      <div class="console-block" id="consoleBlock">
+        <div class="console-header">
+          <button type="button" class="console-title" id="consoleToggle" aria-expanded="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 7 5 5-5 5M12 18h8"/></svg>
+            KONSOL
+            <span class="counter" id="consoleCounter">0</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <button class="btn quiet" style="min-height:27px;padding:5px 9px;font-size:11px" id="clearConsole" type="button">Konsolu temizle</button>
+        </div>
+        <div class="console-rows" id="consoleRows" role="log" aria-live="polite"><div class="console-empty">Henüz konsol çıktısı yok.</div></div>
+      </div>
+    </section>
+  </main>
+  <footer class="bottom" aria-label="AI’Han Academy bağlantılar ve telif bilgileri">
+    <nav class="footer-links" aria-label="Yayınlar, projeler ve sosyal profiller">
+      <a href="https://www.kitapyurdu.com/yazar/ayhan-bozkurt/260288.html" target="_blank" rel="noopener noreferrer">Kitapyurdu</a>
+      <a href="https://www.linkedin.com/in/ayhanbozkurt/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      <a href="https://medium.com/@ayhanbzkrt" target="_blank" rel="noopener noreferrer">Medium</a>
+      <a href="https://github.com/ayhanbzkrt" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://www.youtube.com/@ayhanbzkrt/videos" target="_blank" rel="noopener noreferrer">YouTube</a>
+      <a href="https://orcid.org/0009-0000-6638-8544" target="_blank" rel="noopener noreferrer">ORCID</a>
+      <a href="https://ayhanbzkrt.github.io/benaihan/" target="_blank" rel="noopener noreferrer">AI’Han Academy</a>
+    </nav>
+    <p class="footer-copyright">© 2026 Ayhan Bozkurt — AI’Han Academy. Tüm hakları saklıdır. İzinsiz ve ticari amaçlı kullanılamaz. Eğitim amaçlı hazırlanmıştır. Bilgi toplamaz, kaydetmez ve paylaşmaz.</p>
+    <span class="privacy">Pyodide / WebAssembly · ES Modules / JSX / TypeScript · Yerel sunucu yok</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <h2 id="modalTitle">Örnek seçin</h2>
+    <p id="modalText">Başlangıç projesi veya etkileşimli örnek çalışması yükleyebilirsiniz. Mevcut düzenleme alanı üzerine yazılır.</p>
+    <div id="modalContents"></div>
+    <div class="modal-actions"><button type="button" class="btn" id="modalCancel">Vazgeç</button><button type="button" class="btn primary" id="modalOk">Devam et</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // Tüm örnekler, editör ve önizleme bu tek dosyanın içindedir.
+  // Dış servise kod gönderilmez. Kullanıcının açtığı üçüncü taraf bağlantılar
+  // veya kod içerisindeki ağ istekleri uygulamanın kontrolü dışındadır.
+  const starter = {
+    html: `<main class="sahne">\n  <span class="etiket">İlk denemeniz hazır</span>\n  <h1>Merhaba, <em>Kod Mutfağı!</em></h1>\n  <p>Soldaki HTML, CSS ve JS sekmelerinde istediğiniz değişikliği yapın. Çıktı anında sağda görünsün.</p>\n  <button id="deneyButton">Bir sürpriz dene <span aria-hidden="true">↗</span></button>\n  <p id="mesaj" class="mesaj" aria-live="polite">HTML yapıyı, CSS görünümü, JavaScript davranışı belirler.</p>\n  <div class="dekor bir"></div>\n  <div class="dekor iki"></div>\n</main>`,
+    css: `* { box-sizing: border-box; }\nbody {\n  margin: 0;\n  min-height: 100vh;\n  display: grid;\n  place-items: center;\n  padding: 30px;\n  color: #244954;\n  font-family: system-ui, sans-serif;\n  background: #f1f9f8;\n}\n.sahne { position: relative; max-width: 580px; z-index: 0; }\n.etiket { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: #428b88; text-transform: uppercase; }\nh1 { font-size: clamp(2.5rem, 6vw, 4rem); line-height: 1.08; letter-spacing: -.055em; margin: 22px 0; }\nh1 em { font-style: normal; color: #1e978e; }\np { max-width: 470px; font-size: 16px; line-height: 1.8; color: #5a797f; }\nbutton { margin-top: 18px; border: 0; border-radius: 12px; color: white; background: #197d7c; padding: 16px 22px; font: 700 15px system-ui; cursor: pointer; box-shadow: 0 10px 27px #197d7c27; transition: transform .2s; }\nbutton:hover { transform: translateY(-3px); }\nbutton span { margin-left: 15px; }\n.mesaj { margin-top: 21px; font-size: 13px; }\n.dekor { position: fixed; border-radius: 50%; z-index: -1; pointer-events: none; filter: blur(2px); }\n.bir { width: 200px; height: 200px; background: #d9f0ed; top: 8%; right: 5%; }\n.iki { width: 110px; height: 110px; background: #e3eefa; bottom: 9%; left: 5%; }`,
+    js: `const buton = document.querySelector('#deneyButton');\nconst mesaj = document.querySelector('#mesaj');\nlet sayac = 0;\n\nbuton.addEventListener('click', () => {\n  sayac += 1;\n  mesaj.textContent = sayac + '. deneme başarılı! Kodunuz çalışıyor.';\n  buton.style.background = sayac % 2 ? '#4769ad' : '#197d7c';\n  console.log('Tıklama sayısı:', sayac);\n});\n\nconsole.log('AI’Han Kod Mutfağı hazır.');`
+  };
+
+  const starterPython = `# AI’Han Kod Mutfağı · İlk Python programım
+# Kodu değiştirin ve Çalıştır düğmesine basın.
+
+def selamla(isim):
+    return f"Merhaba, {isim}! Python çalışıyor."
+
+print(selamla("Kod Mutfağı"))
+
+puanlar = [72, 85, 91, 68, 94]
+ortalama = sum(puanlar) / len(puanlar)
+print("Puanlar:", puanlar)
+print(f"Ortalama: {ortalama:.1f}")
+
+for adim in range(1, 4):
+    print(f"{adim}. adım tamamlandı")`;
+  const pythonSamples = {
+    starter: starterPython,
+    input: `# input() yanıtlarını sağdaki giriş kutusuna satır satır yazın.
+isim = input("Adınız: ")
+yas = int(input("Yaşınız: "))
+print(f"Merhaba {isim}, {yas + 1} yaşına girdiğinizde yine görüşürüz.")`,
+    data: `# Verileri inceleme · Python standart kütüphanesi
+from statistics import mean, median, pstdev
+
+veriler = [12, 18, 14, 24, 15, 18, 21, 16]
+print("Veriler:", veriler)
+print("Ortalama:", round(mean(veriler), 2))
+print("Ortanca:", median(veriler))
+print("Std. sapma:", round(pstdev(veriler), 2))
+print("18 ve üzeri:", [v for v in veriler if v >= 18])`,
+    plot: `# Matplotlib grafiği · İlk çalıştırmada paket indirilir.
+import matplotlib.pyplot as plt
+
+donem = ["Eyl", "Eki", "Kas", "Ara", "Oca"]
+sayilar = [12, 18, 15, 26, 32]
+
+plt.figure(figsize=(7, 3.6))
+plt.plot(donem, sayilar, color="#197d7c", marker="o", linewidth=2.5)
+plt.title("Aylara Göre Katılım")
+plt.ylabel("Katılımcı sayısı")
+plt.grid(alpha=0.25)
+plt.tight_layout()
+plt.show()
+print("Grafik oluşturuldu.")`
+  };
+
+  const samples = {
+    starter,
+    counter: {
+      html: `<section class="wrap">\n  <span>ETKİLEŞİM ÖRNEĞİ</span>\n  <h1>Bir küçük sayaç</h1>\n  <p>Her tıklama JavaScript tarafından hesaplanır.</p>\n  <strong id="counter" aria-live="polite">0</strong>\n  <div class="actions"><button id="minus">− Azalt</button><button id="plus">+ Artır</button><button id="reset">Sıfırla</button></div>\n</section>`,
+      css: `* { box-sizing: border-box }\nbody { margin:0; background: #f4f8ff; font-family: system-ui, sans-serif; display:grid; place-items:center; min-height:100vh; color:#2c425a; text-align:center; padding:20px }\n.wrap { width:100%; max-width:480px }\n.wrap > span { font-size:11px; letter-spacing:.2em; font-weight:700; color:#638caf }\nh1 { font-size:clamp(30px, 7vw, 48px); letter-spacing:-.04em; margin:14px 0 }\np { color:#718196 }\nstrong { font-size:100px; font-variant-numeric: tabular-nums; display:block; padding:30px 0; font-weight:750; color:#427a9d }\n.actions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px }\nbutton { padding:12px 17px; color:#27607e; background:white; border:1px solid #bfd7e7; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer }\nbutton:hover { background:#e1f0fa }`,
+      js: `let value = 0;\nconst counter = document.querySelector('#counter');\nconst update = () => { counter.textContent = value; console.log('Yeni değer:', value); };\ndocument.querySelector('#plus').onclick = () => { value++; update(); };\ndocument.querySelector('#minus').onclick = () => { value--; update(); };\ndocument.querySelector('#reset').onclick = () => { value = 0; update(); };`
+    },
+    canvas: {
+      html: `<main>\n  <h1>Renklerin izinde</h1>\n  <p>İmleci hareket ettirerek çizim yapın. Dokunmatik ekranla da çalışır.</p>\n  <canvas id="drawing"></canvas>\n  <button id="erase">Tuvali temizle</button>\n</main>`,
+      css: `* { box-sizing: border-box }\nbody { margin:0; min-height:100vh; background:#f2faf8; font-family:system-ui,sans-serif; color:#24444d; padding:24px }\nmain { max-width:800px; margin:auto }\nh1 { letter-spacing:-.045em; font-size:clamp(28px,5vw,43px); margin:8px 0 }\np { color:#668087; line-height:1.6 }\ncanvas { display:block; touch-action:none; width:100%; height:clamp(210px,48vh,380px); border:1px solid #c9e5dd; border-radius:14px; background:white; box-shadow:0 4px 20px #24444d0c }\nbutton { margin-top:15px; padding:11px 16px; color:#176b6e; border:1px solid #c3e2df; border-radius:8px; background:white; font-weight:700; cursor:pointer }`,
+      js: `const canvas = document.querySelector('#drawing');\nconst ctx = canvas.getContext('2d');\nconst resize = () => {\n  const bounds = canvas.getBoundingClientRect();\n  const ratio = devicePixelRatio || 1;\n  const old = document.createElement('canvas');\n  old.width = canvas.width; old.height = canvas.height;\n  old.getContext('2d').drawImage(canvas, 0, 0);\n  canvas.width = Math.round(bounds.width * ratio);\n  canvas.height = Math.round(bounds.height * ratio);\n  ctx.drawImage(old, 0, 0);\n};\nresize();\nwindow.addEventListener('resize', resize);\nlet drawing = false;\nlet hue = 160;\ncanvas.addEventListener('pointerdown', e => { drawing = true; canvas.setPointerCapture(e.pointerId); trace(e); });\ncanvas.addEventListener('pointerup', () => drawing = false);\ncanvas.addEventListener('pointercancel', () => drawing = false);\ncanvas.addEventListener('pointermove', e => { if (drawing) trace(e); });\nfunction trace(e) {\n  const r = canvas.getBoundingClientRect();\n  const x = (e.clientX - r.left) * canvas.width / r.width;\n  const y = (e.clientY - r.top) * canvas.height / r.height;\n  hue = (hue + 1.5) % 360;\n  ctx.beginPath(); ctx.arc(x, y, 13 * devicePixelRatio, 0, Math.PI*2);\n  ctx.fillStyle = 'hsla(' + hue + ',65%,63%,.26)'; ctx.fill();\n}\ndocument.querySelector('#erase').onclick = () => ctx.clearRect(0,0,canvas.width,canvas.height);\nconsole.log('Çizim tuvali hazır.');`
+    }
+  };
+
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => [...document.querySelectorAll(selector)];
+  const editor = $('#sourceEditor');
+  const highlight = $('#highlight');
+  const lines = $('#lineNumbers');
+  const frame = $('#previewFrame');
+  // Ready-to-run web examples use genuine browser runtimes, not static screenshots.
+  samples.modern = {
+    html:'<main class="layout"><p class="eyebrow">MODERN CSS</p><h1>Modern CSS laboratuvarı</h1><p>Container queries, clamp(), nesting ve renk karışımı.</p><div class="features"><article><h2>Uyumlu düzen</h2><p>Alan genişliğine göre değişen kart yapısı.</p></article><article><h2>Yeni renk API</h2><p>color-mix() ve modern renkler.</p></article></div></main>',
+    css:':root{font-family:system-ui;color:#1c414b;background:#eef8f8}.layout{max-width:900px;margin:auto;padding:clamp(24px,7vw,80px);container-type:inline-size}.eyebrow{letter-spacing:.17em;font-size:12px;color:#257e84}h1{font-size:clamp(2rem,6vw,4rem);letter-spacing:-.06em}.features{display:grid;grid-template-columns:1fr 1fr;gap:14px}article{background:white;padding:25px;border:1px solid color-mix(in srgb,#278189 20%,white);border-radius:18px;h2{font-size:19px}}@container (max-width:530px){.features{grid-template-columns:1fr}}',
+    js:'console.info("Modern CSS hazır. Ekran genişliğini değiştirmeyi dene.");'
+  };
+  samples.tailwind = {
+    html:'<main class="min-h-screen bg-slate-50 flex items-center justify-center p-6"><section class="max-w-xl w-full rounded-3xl bg-white p-10 shadow-sm ring-1 ring-slate-200"><p class="text-teal-700 font-semibold tracking-widest text-xs">TAILWIND CSS 4</p><h1 class="text-4xl font-bold tracking-tight text-slate-900 mt-5">Koddan canlı tasarıma.</h1><p class="text-slate-600 mt-4">Bir sınıfı değiştir ve sonucu anında gör.</p><button id="twBtn" class="mt-7 px-6 py-3 bg-teal-700 text-white rounded-xl hover:bg-teal-800">Etkileşimi dene</button><p class="mt-4 text-teal-700" id="twOut"></p></section></main>',
+    css:'@theme{--font-sans:ui-sans-serif,system-ui,sans-serif}',
+    js:'document.getElementById("twBtn").addEventListener("click",()=>document.getElementById("twOut").textContent="JavaScript de çalışıyor.");'
+  };
+  samples.vue = {
+    html:'<div id="vue-root" style="max-width:480px;margin:70px auto;font-family:system-ui"></div>',
+    css:':root{background:#f4fafb;color:#1e4f58}button{border:0;background:#207c81;color:white;padding:12px 20px;border-radius:10px;cursor:pointer}',
+    js:'import { createApp, ref } from "vue";\ncreateApp({setup(){const n=ref(0);return {n};},template:`<h1>Vue 3 canlı örnek</h1><p>Sayaç: {{ n }}</p><button @click="n++">Artır</button>`}).mount("#vue-root");'
+  };
+  samples.react = {
+    html:'<div id="root"></div>',
+    css:'body{background:#eff8f8;font-family:system-ui;color:#1e414a}.sample{max-width:460px;margin:70px auto;padding:40px;background:white;border-radius:24px;box-shadow:0 18px 70px #17475416}h1{letter-spacing:-.05em}button{background:#1c787d;border:0;border-radius:10px;color:white;padding:12px 17px;font:inherit;cursor:pointer}',
+    js:'import React, {useState} from "react";\nimport {createRoot} from "react-dom/client";\nfunction App(){const [count,setCount]=useState<number>(0);return <main className="sample"><h1>React + TypeScript</h1><p>Sayaç: <strong>{count}</strong></p><button onClick={()=>setCount(n=>n+1)}>Artır</button></main>;}\ncreateRoot(document.getElementById("root")!).render(<App/>);'
+  };
+  const state = { mode: 'split', lang: 'html', split: { ...starter }, single: '', python: starterPython, pyInput: '', jsMode: 'auto', tailwind: false, auto: true, runId: '', timeout: null, messageCount: 0, errorCount: 0, pyRunNumber: 0, pythonRunning: false };
+  let pythonWorker = null;
+  let pythonWorkerURL = null;
+  let toastTimer = 0;
+  let modalResolve = null;
+
+  const escapeHTML = (str) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  state.single = compileSplit(state.split.html, state.split.css, state.split.js, '', false);
+  function colorizeMatching(source, rx, classifier) {
+    let out = ''; let previous = 0;
+    for (const match of source.matchAll(rx)) {
+      const index = match.index;
+      out += escapeHTML(source.slice(previous, index));
+      out += `<span class="${classifier(match[0])}">${escapeHTML(match[0])}</span>`;
+      previous = index + match[0].length;
+    }
+    return out + escapeHTML(source.slice(previous));
+  }
+  function highlightHTML(source) {
+    let out = ''; let previous = 0;
+    const rx = /<!--[\s\S]*?-->|<!DOCTYPE[^>]*>|<\/?[a-zA-Z][^>]*>/gi;
+    for (const m of source.matchAll(rx)) {
+      out += escapeHTML(source.slice(previous, m.index));
+      const token = m[0];
+      if (token.startsWith('<!--') || /^<!doctype/i.test(token)) {
+        out += `<span class="tok-comment">${escapeHTML(token)}</span>`;
+      } else {
+        const head = token.match(/^<\/?[\w:-]+/);
+        const intro = head ? head[0] : token;
+        const rest = token.slice(intro.length);
+        out += `<span class="tok-tag">${escapeHTML(intro)}</span>`;
+        let last = 0;
+        const attrs = /([\w:-]+)(\s*=\s*)("[^"]*"|'[^']*'|[^\s>]+)/g;
+        for (const attr of rest.matchAll(attrs)) {
+          out += escapeHTML(rest.slice(last, attr.index));
+          out += `<span class="tok-attr">${escapeHTML(attr[1])}</span>${escapeHTML(attr[2])}<span class="tok-string">${escapeHTML(attr[3])}</span>`;
+          last = attr.index + attr[0].length;
+        }
+        out += escapeHTML(rest.slice(last));
+      }
+      previous = m.index + token.length;
+    }
+    return out + escapeHTML(source.slice(previous));
+  }
+  function getHighlighted(source, lang) {
+    if (lang === 'html') return highlightHTML(source);
+    if (lang === 'py') return colorizeMatching(source, /#[^\n]*|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|\b(?:def|return|if|elif|else|for|while|in|not|and|or|import|from|as|class|pass|break|continue|try|except|finally|with|lambda|yield|async|await|raise|True|False|None|print|input|range|len|sum|str|int|float)\b|\b\d+(?:\.\d+)?\b/g, token => {
+      if (token[0] === '#') return 'tok-comment';
+      if (token[0] === '\"' || token[0] === "'") return 'tok-string';
+      return /^\d/.test(token) ? 'tok-number' : 'tok-key';
+    });
+    if (lang === 'css') return colorizeMatching(source, /\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|#[\da-fA-F]{3,8}\b|@[\w-]+|[\w-]+(?=\s*:)|[{}():;]/g, token => {
+      if (token.startsWith('/*')) return 'tok-comment';
+      if (token[0] === '"' || token[0] === "'") return 'tok-string';
+      if (token[0] === '#') return 'tok-color';
+      if (token[0] === '@') return 'tok-key';
+      if (/^[{}():;]$/.test(token)) return 'tok-punc';
+      return 'tok-attr';
+    });
+    return colorizeMatching(source, /\/\*[^]*?\*\/|\/\/[^\n]*|`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:const|let|var|function|return|if|else|for|while|class|new|async|await|try|catch|throw|import|export|from|true|false|null|undefined|this|switch|case|break|continue|typeof)\b|\b\d+(?:\.\d+)?\b/g, token => {
+      if (token.startsWith('//') || token.startsWith('/*')) return 'tok-comment';
+      if ('`"\''.includes(token[0])) return 'tok-string';
+      if (/^\d/.test(token)) return 'tok-number';
+      return 'tok-key';
+    });
+  }
+  function activeCode() { return state.mode === 'python' ? state.python : (state.mode === 'single' ? state.single : state.split[state.lang]); }
+  function setActiveCode(value) { if (state.mode === 'python') state.python = value; else if (state.mode === 'single') state.single = value; else state.split[state.lang] = value; }
+  function renderSyntax() {
+    const code = editor.value;
+    const lang = state.mode === 'python' ? 'py' : (state.mode === 'single' ? 'html' : state.lang);
+    highlight.innerHTML = getHighlighted(code, lang) + (code.endsWith('\n') ? '\n' : '');
+    const count = code.split('\n').length;
+    lines.textContent = Array.from({ length: count }, (_, i) => i + 1).join('\n');
+    $('#charCount').textContent = `${code.length.toLocaleString('tr-TR')} karakter`;
+    syncScroll();
+    renderCursor();
+  }
+  function renderCursor() {
+    const value = editor.value.slice(0, editor.selectionStart);
+    const line = value.split('\n').length;
+    const col = value.length - value.lastIndexOf('\n');
+    $('#cursorInfo').innerHTML = `Satır <strong>${line}</strong>, Sütun <strong>${col}</strong>`;
+  }
+  function syncScroll() {
+    highlight.style.transform = `translate(${-editor.scrollLeft}px, ${-editor.scrollTop}px)`;
+    lines.style.transform = `translateY(${-editor.scrollTop}px)`;
+  }
+  function updateEditor() {
+    editor.value = activeCode();
+    editor.scrollTop = 0;
+    editor.scrollLeft = 0;
+    editor.selectionStart = editor.selectionEnd = 0;
+    renderSyntax();
+  }
+  function scheduleRun() {
+    if (state.mode === 'python') { $('#runState').textContent = 'Çalıştır düğmesine basın'; return; }
+    if (!state.auto) { $('#runState').textContent = 'Çalıştırılmadı'; return; }
+    clearTimeout(state.timeout);
+    $('#runState').textContent = 'Düzenleniyor…';
+    state.timeout = setTimeout(run, 600);
+  }
+  function insertText(text) {
+    const start = editor.selectionStart, end = editor.selectionEnd;
+    editor.setRangeText(text, start, end, 'end');
+    setActiveCode(editor.value);
+    renderSyntax();
+    scheduleRun();
+  }
+  editor.addEventListener('input', () => {
+    if(state.mode==='python'){invalidateTrace();clearDiagnostic();}
+    setActiveCode(editor.value);
+    renderSyntax();
+    scheduleRun();
+    if(state.mode==='python')scheduleSyntaxCheck();
+  });
+  editor.addEventListener('scroll', syncScroll);
+  editor.addEventListener('click', renderCursor);
+  editor.addEventListener('keyup', renderCursor);
+  editor.addEventListener('select', renderCursor);
+  editor.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (editor.selectionStart !== editor.selectionEnd && editor.value.slice(editor.selectionStart, editor.selectionEnd).includes('\n')) {
+        const startLine = editor.value.lastIndexOf('\n', editor.selectionStart - 1) + 1;
+        const endLine = editor.value.indexOf('\n', editor.selectionEnd);
+        const finish = endLine === -1 ? editor.value.length : endLine;
+        const selected = editor.value.slice(startLine, finish);
+        const transformed = e.shiftKey ? selected.replace(/^ {1,2}/gm, '') : selected.replace(/^/gm, '  ');
+        editor.setRangeText(transformed, startLine, finish, 'select');
+        setActiveCode(editor.value); renderSyntax(); scheduleRun();
+      } else if (!e.shiftKey) insertText(state.mode === 'python' ? '    ' : '  ');
+    }
+    if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+      const before = editor.value.slice(0, editor.selectionStart);
+      const lastLine = before.slice(before.lastIndexOf('\n') + 1);
+      const indent = lastLine.match(/^\s*/)[0];
+      e.preventDefault();
+      const pyBlock = state.mode === 'python' && /:\s*(?:#.*)?$/.test(lastLine);
+      insertText('\n' + indent + (pyBlock ? '    ' : ''));
+    }
+  });
+
+  function setMode(mode) {
+    if (state.mode === mode) return;
+    clearTimeout(state.timeout);
+    if (state.mode === 'python' && state.pythonRunning && mode !== 'python' && currentRunKind !== 'warm') stopPython('Başka bir düzenleyiciye geçildiği için Python işlemi durduruldu.');
+    state.mode = mode;
+    if(mode!=='python')highlightTraceLine(null);
+    const isPython = mode === 'python';
+    $$('.mode-btn').forEach(b => { const active = b.dataset.mode === mode; b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active)); });
+    $$('.tab').forEach(b => {
+      b.hidden = isPython ? b.dataset.lang !== 'py' : (mode === 'single' ? b.dataset.lang !== 'html' : b.dataset.lang === 'py');
+    });
+    const htmlTab = $('.tab[data-lang="html"]');
+    htmlTab.innerHTML = '<span class="tab-dot"></span>' + (mode === 'single' ? 'TÜM KOD' : 'HTML');
+    $('#convertButton').hidden = isPython;
+    $('#convertButton').textContent = mode === 'split' ? 'Birleştir' : 'Ayrıştır';
+    $('#autoRun').closest('label').hidden = isPython;
+    $('#downloadHTML').lastChild.textContent = isPython ? 'Python indir' : 'HTML indir';
+    $('#previewHeading').textContent = isPython ? 'PYTHON ÇIKTISI' : 'ÖNİZLEME';
+    $('#previewViewport').hidden = isPython;
+    $('#pythonViewport').hidden = !isPython;
+    $('#consoleBlock').hidden = isPython;
+    $('.device-group').hidden = isPython;
+    $('#newTab').hidden = isPython;
+    $('#stopPython').hidden = !isPython;
+    $('#webRuntimeTools').hidden = mode !== 'split';
+    if (isPython) {
+      state.lang = 'py';
+      $('#runState').textContent = state.pythonRunning ? 'Python çalışıyor…' : 'Çalıştır düğmesine basın';
+      $('#pythonInput').value = state.pyInput;
+      if (!pythonWorker && !state.pythonRunning) queueMicrotask(() => { if (state.mode==='python' && !state.pythonRunning) startPythonTask('warm'); });
+    } else {
+      state.lang = 'html';
+    }
+    setLanguage(state.lang, false);
+    updateEditor();
+    if (!isPython) scheduleRun();
+  }
+  function setLanguage(lang, refresh = true) {
+    state.lang = lang;
+    $$('.tab').forEach(b => { const active = b.dataset.lang === lang; b.classList.toggle('active', active); b.setAttribute('aria-selected', String(active)); });
+    if (refresh) { updateEditor(); editor.focus(); }
+  }
+  $$('.mode-btn').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+  $$('.tab').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
+
+  $('#jsFlavor').addEventListener('change', e => { state.jsMode=e.target.value; scheduleRun(); });
+  $('#tailwindEnable').addEventListener('change', e => { state.tailwind=e.target.checked; scheduleRun(); });
+  const FRAMEWORK_IMPORT_MAP = {imports:{
+    'react':'https://esm.sh/react@19.3.1',
+    'react-dom':'https://esm.sh/react-dom@19.3.1?external=react',
+    'react-dom/client':'https://esm.sh/react-dom@19.3.1/client?external=react',
+    'vue':'https://esm.sh/vue@3',
+    'three':'https://esm.sh/three',
+    'gsap':'https://esm.sh/gsap',
+    'd3':'https://esm.sh/d3',
+    'lodash-es':'https://esm.sh/lodash-es',
+    'axios':'https://esm.sh/axios'
+  }};
+  let babelPromise=null;
+  function loadBabel(){
+    if(window.Babel)return Promise.resolve(window.Babel);
+    if(babelPromise)return babelPromise;
+    babelPromise = new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      const timer=setTimeout(()=>{script.remove();reject(new Error('JSX/TypeScript dönüştürücüsü 25 saniyede yüklenemedi. İnternet erişimini kontrol edin.'));},25000);
+      script.src='https://cdn.jsdelivr.net/npm/@babel/standalone@7.29.14/babel.min.js';
+      script.crossOrigin='anonymous';
+      script.onload=()=>{clearTimeout(timer);window.Babel?resolve(window.Babel):reject(new Error('Babel yüklenemedi'));};
+      script.onerror=()=>{clearTimeout(timer);reject(new Error('Babel CDN erişimi engellendi. JSX/TypeScript derlenemiyor.'));};
+      document.head.append(script);
+    }).catch(e=>{babelPromise=null;throw e;});
+    return babelPromise;
+  }
+  function guessJavascriptType(js){
+    if(state.jsMode!=='auto')return state.jsMode;
+    return /(^|\n)\s*(?:import\s+(?:[\w*{]|['"]|\()|export\s+(?:default|const|let|var|function|class|\{))/m.test(js)?'module':'classic';
+  }
+  async function generateHtml(withBridge=false, token=''){
+    if(state.mode!=='split')return getCurrentOutput(withBridge,token);
+    let source=state.split.html.trim();
+    if(!/<(?:!doctype|html|head|body)\b/i.test(source)) source='<!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>'+state.split.html+'</body></html>';
+    const type=guessJavascriptType(state.split.js);
+    let js=state.split.js;
+    if(type==='jsx'||type==='tsx'||type==='ts'){
+      const Babel=await loadBabel();
+      const presets=[];
+      if(type==='tsx'||type==='ts')presets.push(['typescript',{allExtensions:true,isTSX:type==='tsx'}]);
+      if(type==='jsx'||type==='tsx')presets.push(['react',{runtime:'classic'}]);
+      js=Babel.transform(js,{filename:'main.'+(type==='jsx'?'jsx':type),sourceType:'module',presets,sourceMaps:false,retainLines:true}).code;
+    }
+    const useModule=type!=='classic';
+    const hasOwnMap=/<scr(?:)ipt\s[^>]*type\s*=\s*["']importmap["']/i.test(source);
+    const importMap=!hasOwnMap && useModule ? '<scr'+'ipt type="importmap">'+JSON.stringify(FRAMEWORK_IMPORT_MAP).replace(/</g,'\\u003c')+'</'+'script>' : '';
+    const tailwind=state.tailwind?'<scr'+'ipt src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></'+'script>':'';
+    const css=state.split.css.trim()?'<style'+(state.tailwind?' type="text/tailwindcss"':'')+' data-aihan="css">\n'+state.split.css.replace(/<\/style/gi,'<\\/style')+'\n</style>':'';
+    const bridge=withBridge&&token?bootstrapScript(token):'';
+    source=addHead(source,[bridge,importMap,tailwind,css].filter(Boolean).join('\n'));
+    // Inline JavaScript is important: ES imports must resolve from the document, not a data: URL.
+    if(js.trim()){
+      const script='<scr'+'ipt'+(useModule?' type="module"':'')+' data-aihan="js">\n'+js.replace(/<\/script/gi,'<\\/script')+'\n</'+'script>';
+      source=addBodyEnd(source,script);
+    }
+    return source;
+  }
+  const SCRIPT_CLOSE = /<\/script/gi;
+  function bootstrapScript(token) {
+    // Raporlama script'i kullanıcı scriptlerinden önce yerleştirilir.
+    const js = `(function(){
+      var token = ${JSON.stringify(token)};
+      function serialize(v){
+        if(typeof v === 'string') return v;
+        if(v instanceof Error) return v.stack || v.message;
+        if(typeof v === 'undefined') return 'undefined';
+        try { var s = JSON.stringify(v); return s === undefined ? String(v) : s; } catch(e) { return String(v); }
+      }
+      function send(level,parts){
+        try { parent.postMessage({channel:'AIHAN_PREVIEW_CONSOLE',token:token,level:level,message:parts.map(serialize).join(' ')},'*'); } catch(e){}
+      }
+      ['log','info','warn','error','debug'].forEach(function(level){
+        var original = console[level];
+        console[level] = function(){var a = Array.prototype.slice.call(arguments);send(level,a);if(original)original.apply(console,a);};
+      });
+      window.addEventListener('error',function(e){send('error',[e.message + (e.filename ? ' (' + e.filename.split('/').pop().slice(0,100) + ':' + e.lineno + ')' : '')]);});
+      window.addEventListener('unhandledrejection',function(e){send('error',['Yakalanmayan Promise hatası:',e.reason]);});
+      window.addEventListener('load',function(){send('ready',['Önizleme yüklendi']);});
+    })();`;
+    return '<' + 'script>' + js.replace(SCRIPT_CLOSE, '<\\/script') + '<\/script>';
+  }
+  function addHead(source, insert) {
+    if (!insert) return source;
+    if (/<head\b[^>]*>/i.test(source)) return source.replace(/<head\b[^>]*>/i, match => match + '\n' + insert + '\n');
+    if (/<html\b[^>]*>/i.test(source)) return source.replace(/<html\b[^>]*>/i, match => match + '<head>\n' + insert + '\n</head>');
+    return insert + '\n' + source;
+  }
+  function addBodyEnd(source, insert) {
+    if (!insert) return source;
+    if (/<\/body\s*>/i.test(source)) return source.replace(/<\/body\s*>/i, insert + '\n</body>');
+    if (/<\/html\s*>/i.test(source)) return source.replace(/<\/html\s*>/i, insert + '\n</html>');
+    return source + '\n' + insert;
+  }
+  function compileSplit(html, css, js, token = '', withBridge = true) {
+    let source = html.trim();
+    if (!/<(?:!doctype|html|head|body)\b/i.test(source)) source = '<!DOCTYPE html>\n<html lang="tr">\n<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>\n<body>\n' + html + '\n</body>\n</html>';
+    const stylesheet = css.trim() ? '<style data-aihan="css">\n' + css.replace(/<\/style/gi, '<\\/style') + '\n</style>' : '';
+    const scriptURL = js.trim() ? 'data:text/javascript;charset=utf-8,' + encodeURIComponent(js) : '';
+    const javascript = scriptURL ? '<' + 'script data-aihan="js" src="' + escapeHTML(scriptURL) + '"><\/script>' : '';
+    source = addHead(source, (withBridge && token ? bootstrapScript(token) + '\n' : '') + stylesheet);
+    return addBodyEnd(source, javascript);
+  }
+  function getCurrentOutput(withBridge = false, token = '') {
+    if (state.mode === 'split') return compileSplit(state.split.html, state.split.css, state.split.js, token, withBridge);
+    const source = state.single.trim() || '<!doctype html><html><head><meta charset="UTF-8"></head><body></body></html>';
+    return withBridge ? addHead(source, bootstrapScript(token)) : source;
+  }
+  function clearLogs() {
+    state.messageCount = 0; state.errorCount = 0;
+    $('#consoleRows').replaceChildren();
+    const empty = document.createElement('div'); empty.className = 'console-empty'; empty.textContent = 'Henüz konsol çıktısı yok.'; $('#consoleRows').append(empty);
+    $('#consoleCounter').textContent = '0'; $('#consoleCounter').classList.remove('error');
+  }
+  function logToConsole(level, message) {
+    if (level === 'ready') { $('#runState').textContent = state.errorCount ? 'Hata var' : 'Hazır'; return; }
+    if (state.messageCount === 0) $('#consoleRows').replaceChildren();
+    state.messageCount++;
+    if (level === 'error') state.errorCount++;
+    const row = document.createElement('div');
+    const lev = document.createElement('span'); const val = document.createElement('span');
+    row.className = 'logrow ' + (['error','warn','info'].includes(level) ? level : '');
+    if (state.messageCount > 400) $('#consoleRows').firstElementChild?.remove();
+    lev.className = 'level'; lev.textContent = ({ log: 'LOG', info: 'BİLGİ', error: 'HATA', warn: 'UYARI', debug: 'DEBUG' })[level] || 'LOG';
+    val.textContent = message; row.append(lev, val); $('#consoleRows').append(row);
+    $('#consoleRows').scrollTop = $('#consoleRows').scrollHeight;
+    $('#consoleCounter').textContent = state.errorCount ? `${state.errorCount} hata` : String(state.messageCount);
+    $('#consoleCounter').classList.toggle('error', state.errorCount > 0);
+    if (level === 'error') { $('#runState').textContent = 'Hata var'; $('#consoleBlock').classList.remove('collapsed'); $('#consoleToggle').setAttribute('aria-expanded','true'); }
+  }
+  const DIAGNOSTICS_HELPER = "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\"\"\"AI’Han Kod Mutfağı: Türkçe, eyleme dönük Python hata tanıları.\n\nBu modül yalnızca standart Python kütüphanesini kullanır. Öneriler kesin\nolmadığında otomatik düzeltme üretmez. Öğrenci kodunu çalıştırmaz.\n\"\"\"\nimport ast\nimport builtins\nimport difflib\nimport io\nimport keyword\nimport re\nimport tokenize\nimport traceback\n\nHEADERS = re.compile(r'^\\s*(?:async\\s+)?(?:if|elif|else|for|while|def|class|try|except|finally|with|match|case)\\b')\nTITLES = {\n    'SyntaxError': 'Python sözdizimi hatası',\n    'IndentationError': 'Girinti hatası',\n    'TabError': 'Sekme ve boşluk hizalama hatası',\n    'NameError': 'Tanımlanmamış isim',\n    'UnboundLocalError': 'Değer atanmadan kullanılan değişken',\n    'TypeError': 'Uyumsuz veri türü veya fonksiyon kullanımı',\n    'ValueError': 'Geçersiz değer',\n    'ZeroDivisionError': 'Sıfıra bölme hatası',\n    'IndexError': 'Liste/dizi sınırı aşıldı',\n    'KeyError': 'Sözlükte bulunmayan anahtar',\n    'AttributeError': 'Nesnede bulunmayan özellik veya metot',\n    'ModuleNotFoundError': 'Bulunamayan Python kütüphanesi',\n    'ImportError': 'İçe aktarma hatası',\n    'FileNotFoundError': 'Dosya bulunamadı',\n    'PermissionError': 'Dosya veya kaynağa erişim izni yok',\n    'EOFError': 'Giriş verisi eksik',\n    'AssertionError': 'Beklenen koşul sağlanmadı',\n    'RecursionError': 'Çok fazla iç içe fonksiyon çağrısı',\n    'OverflowError': 'Sayı veya hesaplama sınırı aşıldı',\n    'RuntimeError': 'Çalıştırma hatası',\n}\n\ndef _code_line(source, line):\n    lines = source.splitlines()\n    return lines[line - 1] if isinstance(line, int) and 1 <= line <= len(lines) else ''\n\n\ndef _line_from_exception(exc):\n    if isinstance(exc, SyntaxError):\n        return max(1, exc.lineno or 1), max(1, exc.offset or 1), max(1, exc.end_offset or exc.offset or 1)\n    frames = traceback.extract_tb(exc.__traceback__)\n    user_frames = [f for f in frames if f.filename == 'main.py' or f.filename.endswith('/main.py') or f.filename.endswith('\\\\main.py')]\n    if user_frames:\n        return max(1, user_frames[-1].lineno), 1, 1\n    return None, None, None\n\n\ndef _indent_fix(lines, line):\n    if not (1 <= line <= len(lines)):\n        return None\n    actual = lines[line-1]\n    if not actual.strip() or actual[:len(actual)-len(actual.lstrip())]:\n        return None\n    # Identify the nearest preceding non-empty line; only change when it opens a suite.\n    previous = line-2\n    while previous >= 0 and not lines[previous].strip():\n        previous -= 1\n    if previous < 0:\n        return None\n    prev = lines[previous]\n    if not prev.split('#',1)[0].rstrip().endswith(':'):\n        return None\n    indent = re.match(r'[ \\t]*', prev).group().replace('\\t', '    ')\n    return {'line':line,'original':actual,'replacement':indent+'    '+actual,\n            'label':'Bu satıra dört boşlukluk girinti ekle'}\n\n\ndef _colon_fix(lines, line):\n    if not (1 <= line <= len(lines)):\n        return None\n    original = lines[line-1]\n    if not HEADERS.match(original):\n        return None\n    code, marker, comment = original.partition('#')\n    stripped = code.rstrip()\n    if not stripped or stripped.endswith(':'):\n        return None\n    replacement = stripped + ':' + (' ' + marker + comment if marker else '')\n    return {'line':line, 'original':original, 'replacement':replacement,\n            'label':'Satırın sonuna iki nokta (:) ekle'}\n\n\ndef _bracket_fix(lines, line, msg):\n    if not (1 <= line <= len(lines)):\n        return None\n    original = lines[line-1]\n    if '#' in original:\n        return None\n    closes = {'(' : ')', '[' : ']', '{' : '}'}\n    for opener, closer in closes.items():\n        if (opener+'\\'' in msg or opener+'\"' in msg or 'was never closed' in msg) and original.count(opener) - original.count(closer) == 1:\n            # For a single-line unclosed bracket, this is a helpful *proposal*,\n            # but never silently rewrite complex nested expressions.\n            if original.count('\"') % 2 == 0 and original.count(\"'\") % 2 == 0 and all(original.count(a)==original.count(b) for a,b in closes.items() if a!=opener):\n                return {'line':line,'original':original,'replacement':original.rstrip()+closer,\n                        'label':f'Eksik “{closer}” işaretini ekle'}\n    return None\n\n\ndef _quote_fix(lines, line):\n    if not (1 <= line <= len(lines)):\n        return None\n    original = lines[line-1]\n    # Conservative, common simple string example. Avoid comments and triple quotes.\n    if '#' in original or \"'''\" in original or '\"\"\"' in original:\n        return None\n    for q in ('\"', \"'\"):\n        if original.count(q) % 2 == 1 and original.count(q) == 1:\n            pos = original.find(q)\n            if original[:pos].count('\\\\') % 2 == 0:\n                # Keep trailing closing parentheses beyond the missing quote.\n                suffix = original[pos+1:]\n                closers = ''.join(reversed([c for c in suffix if c in ')]}']))\n                trailing = len(closers)\n                replacement = original.rstrip()\n                # `print(\"merhaba)` -> `print(\"merhaba\")`\n                if trailing and replacement.endswith(tuple(')]}')):\n                    insertion = len(replacement)-trailing\n                    replacement = replacement[:insertion] + q + replacement[insertion:]\n                else:\n                    replacement += q\n                return {'line':line,'original':original,'replacement':replacement,\n                        'label':'Eksik kapanış tırnağını ekle'}\n    return None\n\n\ndef _name_suggestion(exc, source):\n    name = getattr(exc, 'name', None)\n    if not name:\n        m = re.search(r\"name '([^']+)' is not defined\", str(exc))\n        name = m.group(1) if m else None\n    if not name:\n        return None\n    known = set(dir(builtins)) | set(keyword.kwlist)\n    try:\n        tokens = tokenize.generate_tokens(io.StringIO(source).readline)\n        known |= {item.string for item in tokens if item.type == tokenize.NAME and item.string != name}\n    except (tokenize.TokenError, SyntaxError):\n        pass\n    choices = difflib.get_close_matches(name, sorted(known), n=2, cutoff=.68)\n    if choices:\n        return f'“{name}” yerine “{choices[0]}” yazmak istemiş olabilir misin? İsimlerin yazılışını ve büyük/küçük harflerini karşılaştır.'\n    return f'“{name}” adlı değişkeni kullanmadan önce değer ata veya adını kontrol et. Python büyük/küçük harfe duyarlıdır.'\n\n\ndef analyze_error(exc, source):\n    \"\"\"Return structured, language-consistent user-facing Turkish diagnostic data.\"\"\"\n    if not isinstance(source, str):\n        source = ''\n    typ = type(exc).__name__\n    line, col, end_col = _line_from_exception(exc)\n    lines = source.splitlines()\n    raw = getattr(exc, 'msg', str(exc)) or ''\n    low = raw.lower()\n    title = TITLES.get(typ, 'Python çalıştırma hatası')\n    explanation = 'Python bu satırdaki ifadeyi anlayamadı veya uygulayamadı.'\n    suggestion = 'Hata verilen satırı ve hemen öncesindeki ifadeyi kontrol et.'\n    fix = None\n    if isinstance(exc, (SyntaxError, IndentationError, TabError)):\n        explanation = 'Kod bu hâliyle Python kurallarına uygun değil; çalıştırma başlamadan durduruldu.'\n        if 'expected' in low and \"':'\" in low:\n            explanation = 'Bir koşul, döngü, fonksiyon veya başka bir kod bloğunun sonunda iki nokta (:) eksik.'\n            suggestion = 'if, elif, for, while, def, class, else gibi blok açan satırların sonuna : yaz.'\n            fix = _colon_fix(lines, line)\n        elif 'expected an indented block' in low:\n            explanation = 'Python burada içeriye girintilenmiş bir kod bloğu bekliyor.'\n            suggestion = 'Üstteki “:” ile biten satırın altındaki komutları genellikle dört boşluk içeri al.'\n            fix = _indent_fix(lines, line)\n            # Python often reports the first bad line. The previous header remains useful.\n        elif 'unexpected indent' in low:\n            explanation = 'Burada gereksiz girinti var veya üstte açılmış bir kod bloğu bulunmuyor.'\n            suggestion = 'Bu satırı ait olduğu bloğun hizasına getir. Python’da girintiler kodun anlamını belirler.'\n        elif 'unindent does not match' in low:\n            explanation = 'Bu satırın girintisi önceki kod bloklarının hizasıyla uyuşmuyor.'\n            suggestion = 'Aynı bloktaki satırları aynı sayıda boşlukla hizala; genellikle dört boşluk kullan.'\n        elif isinstance(exc, TabError) or 'inconsistent use of tabs and spaces' in low:\n            explanation = 'Girintilerde sekme (Tab) ve boşluk karakterleri karışmış.'\n            suggestion = 'Sekmeleri dört boşlukla değiştir ve aynı bloktaki satırları aynı hizaya getir.'\n        elif 'never closed' in low or 'unexpected eof while parsing' in low or 'was never closed' in low:\n            explanation = 'Açılan bir parantez veya köşeli/süslü ayraç kapanmamış.'\n            suggestion = 'Açılan (, [ veya { işaretinin uygun ), ] veya } ile kapatıldığını kontrol et.'\n            fix = _bracket_fix(lines, line, low)\n        elif 'unterminated string literal' in low or 'eol while scanning string literal' in low:\n            explanation = 'Metin tırnakla açılmış ama doğru biçimde kapatılmamış.'\n            suggestion = 'Metnin başlangıcında kullanılan tek veya çift tırnağın eşini ekle.'\n            fix = _quote_fix(lines, line)\n        elif 'invalid character' in low:\n            explanation = 'Kodda Python’un komut olarak kabul etmediği bir karakter var.'\n            suggestion = 'Özellikle akıllı tırnaklar (“ ”), uzun tire (—) veya görünmeyen boşluklar yerine normal klavye karakterlerini kullan.'\n        elif 'invalid decimal literal' in low:\n            explanation = 'Sayı yazımı Python kurallarına uymuyor.'\n            suggestion = 'Sayıların başında harf kullanma; değişken adları rakamla başlayamaz.'\n        elif 'cannot assign to' in low or 'assignment to expression' in low:\n            explanation = 'Bir değere ya da hesaplamanın sonucuna doğrudan atama yapılmaya çalışılıyor.'\n            suggestion = 'Atamanın solunda bir değişken adı olmalı: sonuc = 5. Karşılaştırmak için == kullan.'\n        elif 'maybe you meant' in low or 'invalid syntax' in low:\n            explanation = 'Bu satırda Python’un beklemediği bir ifade ya da eksik işaret bulunuyor.'\n            suggestion = 'Eksik virgül, iki nokta, parantez ve tırnakları kontrol et; değer atamak için =, karşılaştırmak için == kullan.'\n            possible_colon = _colon_fix(lines, line)\n            # Only present a colon fix when the parser actually indicates a colon problem.\n            if 'expected' in low and ':' in low:\n                fix = possible_colon\n        elif \"'return' outside function\" in low:\n            explanation = 'return komutu bir fonksiyonun dışında kullanılmış.'\n            suggestion = 'return satırını def ile tanımlanmış bir fonksiyonun içine taşı.'\n        elif \"'break' outside loop\" in low or \"'continue' not properly in loop\" in low:\n            explanation = 'break veya continue komutu bir döngünün dışında kullanılmış.'\n            suggestion = 'Bu komutu for ya da while döngüsünün gövdesine taşı.'\n        else:\n            explanation = 'Python bu satırın yazımını kabul edemedi.'\n            suggestion = 'Hatanın işaretlendiği sütunu ve üstteki kod satırlarını birlikte incele; tırnak, parantez ve girintileri kontrol et.'\n    elif typ in ('NameError', 'UnboundLocalError'):\n        explanation = 'Kullanılan isim o anda tanımlı değil veya henüz değer almamış.'\n        suggestion = _name_suggestion(exc, source) or 'Değişkeni kullanmadan önce tanımla ve yazılışını kontrol et.'\n    elif typ == 'TypeError':\n        explanation = 'Bu işlemde kullanılan türler veya fonksiyon parametreleri birbiriyle uyuşmuyor.'\n        suggestion = 'type() ile değer türlerine bak. Örneğin sayı ile metni birleştirmeden önce str() veya int() ile dönüştür.'\n        if 'not callable' in low:\n            explanation = 'Fonksiyon olmayan bir değer, fonksiyon gibi parantezle çağrılmış.'\n            suggestion = 'Fonksiyon adının daha önce sayı/metin ile değiştirilmediğini kontrol et; eksik çarpma işareti varsa ekle.'\n        elif 'missing' in low and 'argument' in low:\n            explanation = 'Fonksiyon çağrısında zorunlu bir parametre eksik.'\n            suggestion = 'Fonksiyonun def satırına bak ve gereken tüm parametreleri sırayla ver.'\n    elif typ == 'ValueError':\n        explanation = 'Verilen değer, işlem veya dönüşüm için uygun değil.'\n        suggestion = 'Örneğin int() kullanıyorsan metnin yalnızca geçerli bir sayı içerdiğinden emin ol.'\n    elif typ == 'ZeroDivisionError':\n        explanation = 'Bir sayıyı sıfıra bölmeye çalıştın.'\n        suggestion = 'Bölme yapmadan önce bölenin sıfır olup olmadığını kontrol et: if bolen != 0:'\n    elif typ == 'IndexError':\n        explanation = 'Liste veya dizide var olmayan bir sıradaki öğeye erişiliyor.'\n        suggestion = 'Listenin uzunluğunu len(liste) ile kontrol et. İlk öğenin indeksi 0’dır.'\n    elif typ == 'KeyError':\n        explanation = 'Sözlükte bulunmayan bir anahtar okunuyor.'\n        suggestion = 'Anahtarın varlığını kontrol et veya sozluk.get(\"anahtar\") kullan.'\n    elif typ == 'AttributeError':\n        explanation = 'Bu nesnede istenen özellik veya metot bulunmuyor.'\n        suggestion = 'Nesnenin türünü type(nesne) ile incele; metot adını kontrol et.'\n    elif typ in ('ModuleNotFoundError','ImportError'):\n        explanation = 'İçe aktarılan modül ya kurulu değil ya da belirtilen isimle bulunamıyor.'\n        name = getattr(exc, 'name', None)\n        suggestion = (f'“{name}” paketinin kurulu olup olmadığını kontrol et. Gerekirse Kod Mutfağı → Kütüphane yükle alanından kurmayı dene.' if name else\n                      'Kütüphanenin yazılışını kontrol et ve gerekirse paket yöneticisiyle yükle.')\n    elif typ == 'FileNotFoundError':\n        explanation = 'Kodun açmaya çalıştığı dosya belirtilen konumda yok.'\n        suggestion = 'Dosyanın konumunu ve adını kontrol et. Yerel çalışma alanı geçici bir klasörde açılır.'\n    elif typ == 'PermissionError':\n        explanation = 'Kod, erişim izni olmayan bir dosya veya kaynağa ulaşmaya çalıştı.'\n        suggestion = 'Dosya iznini ve konumunu denetle; yalnızca izin verilen dosyalar üzerinde çalış.'\n    elif typ == 'EOFError':\n        explanation = 'input() komutu bir yanıt bekliyor ancak başka giriş satırı kalmadı.'\n        suggestion = 'Kod Mutfağı’nın “input() için giriş verileri” bölümüne her input() çağrısı için ayrı bir satır ekle.'\n    elif typ == 'AssertionError':\n        explanation = 'assert ile kontrol edilen koşul yanlış sonuç verdi.'\n        suggestion = 'Beklenen değerle hesaplanan değeri karşılaştır; koşulu gözden geçir.'\n    elif typ == 'RecursionError':\n        explanation = 'Fonksiyon kendini çok fazla kez çağırdı.'\n        suggestion = 'Özyinelemeli fonksiyona mutlaka bir durma koşulu ekle.'\n    elif typ == 'OverflowError':\n        explanation = 'Hesaplama bu sayı türünün desteklediği aralığın dışına çıktı.'\n        suggestion = 'Daha küçük değerler kullan veya hesaplama yöntemini düzenle.'\n    elif typ == 'RuntimeError':\n        explanation = 'Kodun yürütülmesi sırasında Python tarafından bir hata bildirildi.'\n        suggestion = 'Hatanın hangi işlemden sonra oluştuğunu, değişken değerlerini ve çağrılan fonksiyonları kontrol et.'\n    else:\n        explanation = 'Python kodu çalışırken beklenmeyen bir durumla karşılaştı.'\n        suggestion = 'Hata satırını, girilen değerleri ve kullandığın kütüphanenin belgelerini incele.'\n    return {\n        'type': typ,\n        'title': title,\n        'line': line,\n        'column': col,\n        'end_column': end_col,\n        'code': _code_line(source, line),\n        'explanation': explanation,\n        'suggestion': suggestion,\n        'fix': fix,\n    }\n\n\ndef check_syntax(source):\n    \"\"\"Validate only Python syntax; never execute user code.\"\"\"\n    try:\n        compile(source, 'main.py', 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)\n        return {'ok':True,'diagnostic':None}\n    except (SyntaxError,IndentationError,TabError) as exc:\n        return {'ok':False,'diagnostic':analyze_error(exc,source)}\n";
+  const TRACE_HELPER = "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\"\"\"AI’Han Kod Mutfağı: Türkçe, eyleme dönük Python hata tanıları.\n\nBu modül yalnızca standart Python kütüphanesini kullanır. Öneriler kesin\nolmadığında otomatik düzeltme üretmez. Öğrenci kodunu çalıştırmaz.\n\"\"\"\nimport ast\nimport builtins\nimport difflib\nimport io\nimport keyword\nimport re\nimport tokenize\nimport traceback\n\nHEADERS = re.compile(r'^\\s*(?:async\\s+)?(?:if|elif|else|for|while|def|class|try|except|finally|with|match|case)\\b')\nTITLES = {\n    'SyntaxError': 'Python sözdizimi hatası',\n    'IndentationError': 'Girinti hatası',\n    'TabError': 'Sekme ve boşluk hizalama hatası',\n    'NameError': 'Tanımlanmamış isim',\n    'UnboundLocalError': 'Değer atanmadan kullanılan değişken',\n    'TypeError': 'Uyumsuz veri türü veya fonksiyon kullanımı',\n    'ValueError': 'Geçersiz değer',\n    'ZeroDivisionError': 'Sıfıra bölme hatası',\n    'IndexError': 'Liste/dizi sınırı aşıldı',\n    'KeyError': 'Sözlükte bulunmayan anahtar',\n    'AttributeError': 'Nesnede bulunmayan özellik veya metot',\n    'ModuleNotFoundError': 'Bulunamayan Python kütüphanesi',\n    'ImportError': 'İçe aktarma hatası',\n    'FileNotFoundError': 'Dosya bulunamadı',\n    'PermissionError': 'Dosya veya kaynağa erişim izni yok',\n    'EOFError': 'Giriş verisi eksik',\n    'AssertionError': 'Beklenen koşul sağlanmadı',\n    'RecursionError': 'Çok fazla iç içe fonksiyon çağrısı',\n    'OverflowError': 'Sayı veya hesaplama sınırı aşıldı',\n    'RuntimeError': 'Çalıştırma hatası',\n}\n\ndef _code_line(source, line):\n    lines = source.splitlines()\n    return lines[line - 1] if isinstance(line, int) and 1 <= line <= len(lines) else ''\n\n\ndef _line_from_exception(exc):\n    if isinstance(exc, SyntaxError):\n        return max(1, exc.lineno or 1), max(1, exc.offset or 1), max(1, exc.end_offset or exc.offset or 1)\n    frames = traceback.extract_tb(exc.__traceback__)\n    user_frames = [f for f in frames if f.filename == 'main.py' or f.filename.endswith('/main.py') or f.filename.endswith('\\\\main.py')]\n    if user_frames:\n        return max(1, user_frames[-1].lineno), 1, 1\n    return None, None, None\n\n\ndef _indent_fix(lines, line):\n    if not (1 <= line <= len(lines)):\n        return None\n    actual = lines[line-1]\n    if not actual.strip() or actual[:len(actual)-len(actual.lstrip())]:\n        return None\n    # Identify the nearest preceding non-empty line; only change when it opens a suite.\n    previous = line-2\n    while previous >= 0 and not lines[previous].strip():\n        previous -= 1\n    if previous < 0:\n        return None\n    prev = lines[previous]\n    if not prev.split('#',1)[0].rstrip().endswith(':'):\n        return None\n    indent = re.match(r'[ \\t]*', prev).group().replace('\\t', '    ')\n    return {'line':line,'original':actual,'replacement':indent+'    '+actual,\n            'label':'Bu satıra dört boşlukluk girinti ekle'}\n\n\ndef _colon_fix(lines, line):\n    if not (1 <= line <= len(lines)):\n        return None\n    original = lines[line-1]\n    if not HEADERS.match(original):\n        return None\n    code, marker, comment = original.partition('#')\n    stripped = code.rstrip()\n    if not stripped or stripped.endswith(':'):\n        return None\n    replacement = stripped + ':' + (' ' + marker + comment if marker else '')\n    return {'line':line, 'original':original, 'replacement':replacement,\n            'label':'Satırın sonuna iki nokta (:) ekle'}\n\n\ndef _bracket_fix(lines, line, msg):\n    if not (1 <= line <= len(lines)):\n        return None\n    original = lines[line-1]\n    if '#' in original:\n        return None\n    closes = {'(' : ')', '[' : ']', '{' : '}'}\n    for opener, closer in closes.items():\n        if (opener+'\\'' in msg or opener+'\"' in msg or 'was never closed' in msg) and original.count(opener) - original.count(closer) == 1:\n            # For a single-line unclosed bracket, this is a helpful *proposal*,\n            # but never silently rewrite complex nested expressions.\n            if original.count('\"') % 2 == 0 and original.count(\"'\") % 2 == 0 and all(original.count(a)==original.count(b) for a,b in closes.items() if a!=opener):\n                return {'line':line,'original':original,'replacement':original.rstrip()+closer,\n                        'label':f'Eksik “{closer}” işaretini ekle'}\n    return None\n\n\ndef _quote_fix(lines, line):\n    if not (1 <= line <= len(lines)):\n        return None\n    original = lines[line-1]\n    # Conservative, common simple string example. Avoid comments and triple quotes.\n    if '#' in original or \"'''\" in original or '\"\"\"' in original:\n        return None\n    for q in ('\"', \"'\"):\n        if original.count(q) % 2 == 1 and original.count(q) == 1:\n            pos = original.find(q)\n            if original[:pos].count('\\\\') % 2 == 0:\n                # Keep trailing closing parentheses beyond the missing quote.\n                suffix = original[pos+1:]\n                closers = ''.join(reversed([c for c in suffix if c in ')]}']))\n                trailing = len(closers)\n                replacement = original.rstrip()\n                # `print(\"merhaba)` -> `print(\"merhaba\")`\n                if trailing and replacement.endswith(tuple(')]}')):\n                    insertion = len(replacement)-trailing\n                    replacement = replacement[:insertion] + q + replacement[insertion:]\n                else:\n                    replacement += q\n                return {'line':line,'original':original,'replacement':replacement,\n                        'label':'Eksik kapanış tırnağını ekle'}\n    return None\n\n\ndef _name_suggestion(exc, source):\n    name = getattr(exc, 'name', None)\n    if not name:\n        m = re.search(r\"name '([^']+)' is not defined\", str(exc))\n        name = m.group(1) if m else None\n    if not name:\n        return None\n    known = set(dir(builtins)) | set(keyword.kwlist)\n    try:\n        tokens = tokenize.generate_tokens(io.StringIO(source).readline)\n        known |= {item.string for item in tokens if item.type == tokenize.NAME and item.string != name}\n    except (tokenize.TokenError, SyntaxError):\n        pass\n    choices = difflib.get_close_matches(name, sorted(known), n=2, cutoff=.68)\n    if choices:\n        return f'“{name}” yerine “{choices[0]}” yazmak istemiş olabilir misin? İsimlerin yazılışını ve büyük/küçük harflerini karşılaştır.'\n    return f'“{name}” adlı değişkeni kullanmadan önce değer ata veya adını kontrol et. Python büyük/küçük harfe duyarlıdır.'\n\n\ndef analyze_error(exc, source):\n    \"\"\"Return structured, language-consistent user-facing Turkish diagnostic data.\"\"\"\n    if not isinstance(source, str):\n        source = ''\n    typ = type(exc).__name__\n    line, col, end_col = _line_from_exception(exc)\n    lines = source.splitlines()\n    raw = getattr(exc, 'msg', str(exc)) or ''\n    low = raw.lower()\n    title = TITLES.get(typ, 'Python çalıştırma hatası')\n    explanation = 'Python bu satırdaki ifadeyi anlayamadı veya uygulayamadı.'\n    suggestion = 'Hata verilen satırı ve hemen öncesindeki ifadeyi kontrol et.'\n    fix = None\n    if isinstance(exc, (SyntaxError, IndentationError, TabError)):\n        explanation = 'Kod bu hâliyle Python kurallarına uygun değil; çalıştırma başlamadan durduruldu.'\n        if 'expected' in low and \"':'\" in low:\n            explanation = 'Bir koşul, döngü, fonksiyon veya başka bir kod bloğunun sonunda iki nokta (:) eksik.'\n            suggestion = 'if, elif, for, while, def, class, else gibi blok açan satırların sonuna : yaz.'\n            fix = _colon_fix(lines, line)\n        elif 'expected an indented block' in low:\n            explanation = 'Python burada içeriye girintilenmiş bir kod bloğu bekliyor.'\n            suggestion = 'Üstteki “:” ile biten satırın altındaki komutları genellikle dört boşluk içeri al.'\n            fix = _indent_fix(lines, line)\n            # Python often reports the first bad line. The previous header remains useful.\n        elif 'unexpected indent' in low:\n            explanation = 'Burada gereksiz girinti var veya üstte açılmış bir kod bloğu bulunmuyor.'\n            suggestion = 'Bu satırı ait olduğu bloğun hizasına getir. Python’da girintiler kodun anlamını belirler.'\n        elif 'unindent does not match' in low:\n            explanation = 'Bu satırın girintisi önceki kod bloklarının hizasıyla uyuşmuyor.'\n            suggestion = 'Aynı bloktaki satırları aynı sayıda boşlukla hizala; genellikle dört boşluk kullan.'\n        elif isinstance(exc, TabError) or 'inconsistent use of tabs and spaces' in low:\n            explanation = 'Girintilerde sekme (Tab) ve boşluk karakterleri karışmış.'\n            suggestion = 'Sekmeleri dört boşlukla değiştir ve aynı bloktaki satırları aynı hizaya getir.'\n        elif 'never closed' in low or 'unexpected eof while parsing' in low or 'was never closed' in low:\n            explanation = 'Açılan bir parantez veya köşeli/süslü ayraç kapanmamış.'\n            suggestion = 'Açılan (, [ veya { işaretinin uygun ), ] veya } ile kapatıldığını kontrol et.'\n            fix = _bracket_fix(lines, line, low)\n        elif 'unterminated string literal' in low or 'eol while scanning string literal' in low:\n            explanation = 'Metin tırnakla açılmış ama doğru biçimde kapatılmamış.'\n            suggestion = 'Metnin başlangıcında kullanılan tek veya çift tırnağın eşini ekle.'\n            fix = _quote_fix(lines, line)\n        elif 'invalid character' in low:\n            explanation = 'Kodda Python’un komut olarak kabul etmediği bir karakter var.'\n            suggestion = 'Özellikle akıllı tırnaklar (“ ”), uzun tire (—) veya görünmeyen boşluklar yerine normal klavye karakterlerini kullan.'\n        elif 'invalid decimal literal' in low:\n            explanation = 'Sayı yazımı Python kurallarına uymuyor.'\n            suggestion = 'Sayıların başında harf kullanma; değişken adları rakamla başlayamaz.'\n        elif 'cannot assign to' in low or 'assignment to expression' in low:\n            explanation = 'Bir değere ya da hesaplamanın sonucuna doğrudan atama yapılmaya çalışılıyor.'\n            suggestion = 'Atamanın solunda bir değişken adı olmalı: sonuc = 5. Karşılaştırmak için == kullan.'\n        elif 'maybe you meant' in low or 'invalid syntax' in low:\n            explanation = 'Bu satırda Python’un beklemediği bir ifade ya da eksik işaret bulunuyor.'\n            suggestion = 'Eksik virgül, iki nokta, parantez ve tırnakları kontrol et; değer atamak için =, karşılaştırmak için == kullan.'\n            possible_colon = _colon_fix(lines, line)\n            # Only present a colon fix when the parser actually indicates a colon problem.\n            if 'expected' in low and ':' in low:\n                fix = possible_colon\n        elif \"'return' outside function\" in low:\n            explanation = 'return komutu bir fonksiyonun dışında kullanılmış.'\n            suggestion = 'return satırını def ile tanımlanmış bir fonksiyonun içine taşı.'\n        elif \"'break' outside loop\" in low or \"'continue' not properly in loop\" in low:\n            explanation = 'break veya continue komutu bir döngünün dışında kullanılmış.'\n            suggestion = 'Bu komutu for ya da while döngüsünün gövdesine taşı.'\n        else:\n            explanation = 'Python bu satırın yazımını kabul edemedi.'\n            suggestion = 'Hatanın işaretlendiği sütunu ve üstteki kod satırlarını birlikte incele; tırnak, parantez ve girintileri kontrol et.'\n    elif typ in ('NameError', 'UnboundLocalError'):\n        explanation = 'Kullanılan isim o anda tanımlı değil veya henüz değer almamış.'\n        suggestion = _name_suggestion(exc, source) or 'Değişkeni kullanmadan önce tanımla ve yazılışını kontrol et.'\n    elif typ == 'TypeError':\n        explanation = 'Bu işlemde kullanılan türler veya fonksiyon parametreleri birbiriyle uyuşmuyor.'\n        suggestion = 'type() ile değer türlerine bak. Örneğin sayı ile metni birleştirmeden önce str() veya int() ile dönüştür.'\n        if 'not callable' in low:\n            explanation = 'Fonksiyon olmayan bir değer, fonksiyon gibi parantezle çağrılmış.'\n            suggestion = 'Fonksiyon adının daha önce sayı/metin ile değiştirilmediğini kontrol et; eksik çarpma işareti varsa ekle.'\n        elif 'missing' in low and 'argument' in low:\n            explanation = 'Fonksiyon çağrısında zorunlu bir parametre eksik.'\n            suggestion = 'Fonksiyonun def satırına bak ve gereken tüm parametreleri sırayla ver.'\n    elif typ == 'ValueError':\n        explanation = 'Verilen değer, işlem veya dönüşüm için uygun değil.'\n        suggestion = 'Örneğin int() kullanıyorsan metnin yalnızca geçerli bir sayı içerdiğinden emin ol.'\n    elif typ == 'ZeroDivisionError':\n        explanation = 'Bir sayıyı sıfıra bölmeye çalıştın.'\n        suggestion = 'Bölme yapmadan önce bölenin sıfır olup olmadığını kontrol et: if bolen != 0:'\n    elif typ == 'IndexError':\n        explanation = 'Liste veya dizide var olmayan bir sıradaki öğeye erişiliyor.'\n        suggestion = 'Listenin uzunluğunu len(liste) ile kontrol et. İlk öğenin indeksi 0’dır.'\n    elif typ == 'KeyError':\n        explanation = 'Sözlükte bulunmayan bir anahtar okunuyor.'\n        suggestion = 'Anahtarın varlığını kontrol et veya sozluk.get(\"anahtar\") kullan.'\n    elif typ == 'AttributeError':\n        explanation = 'Bu nesnede istenen özellik veya metot bulunmuyor.'\n        suggestion = 'Nesnenin türünü type(nesne) ile incele; metot adını kontrol et.'\n    elif typ in ('ModuleNotFoundError','ImportError'):\n        explanation = 'İçe aktarılan modül ya kurulu değil ya da belirtilen isimle bulunamıyor.'\n        name = getattr(exc, 'name', None)\n        suggestion = (f'“{name}” paketinin kurulu olup olmadığını kontrol et. Gerekirse Kod Mutfağı → Kütüphane yükle alanından kurmayı dene.' if name else\n                      'Kütüphanenin yazılışını kontrol et ve gerekirse paket yöneticisiyle yükle.')\n    elif typ == 'FileNotFoundError':\n        explanation = 'Kodun açmaya çalıştığı dosya belirtilen konumda yok.'\n        suggestion = 'Dosyanın konumunu ve adını kontrol et. Yerel çalışma alanı geçici bir klasörde açılır.'\n    elif typ == 'PermissionError':\n        explanation = 'Kod, erişim izni olmayan bir dosya veya kaynağa ulaşmaya çalıştı.'\n        suggestion = 'Dosya iznini ve konumunu denetle; yalnızca izin verilen dosyalar üzerinde çalış.'\n    elif typ == 'EOFError':\n        explanation = 'input() komutu bir yanıt bekliyor ancak başka giriş satırı kalmadı.'\n        suggestion = 'Kod Mutfağı’nın “input() için giriş verileri” bölümüne her input() çağrısı için ayrı bir satır ekle.'\n    elif typ == 'AssertionError':\n        explanation = 'assert ile kontrol edilen koşul yanlış sonuç verdi.'\n        suggestion = 'Beklenen değerle hesaplanan değeri karşılaştır; koşulu gözden geçir.'\n    elif typ == 'RecursionError':\n        explanation = 'Fonksiyon kendini çok fazla kez çağırdı.'\n        suggestion = 'Özyinelemeli fonksiyona mutlaka bir durma koşulu ekle.'\n    elif typ == 'OverflowError':\n        explanation = 'Hesaplama bu sayı türünün desteklediği aralığın dışına çıktı.'\n        suggestion = 'Daha küçük değerler kullan veya hesaplama yöntemini düzenle.'\n    elif typ == 'RuntimeError':\n        explanation = 'Kodun yürütülmesi sırasında Python tarafından bir hata bildirildi.'\n        suggestion = 'Hatanın hangi işlemden sonra oluştuğunu, değişken değerlerini ve çağrılan fonksiyonları kontrol et.'\n    else:\n        explanation = 'Python kodu çalışırken beklenmeyen bir durumla karşılaştı.'\n        suggestion = 'Hata satırını, girilen değerleri ve kullandığın kütüphanenin belgelerini incele.'\n    return {\n        'type': typ,\n        'title': title,\n        'line': line,\n        'column': col,\n        'end_column': end_col,\n        'code': _code_line(source, line),\n        'explanation': explanation,\n        'suggestion': suggestion,\n        'fix': fix,\n    }\n\n\ndef check_syntax(source):\n    \"\"\"Validate only Python syntax; never execute user code.\"\"\"\n    try:\n        compile(source, 'main.py', 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)\n        return {'ok':True,'diagnostic':None}\n    except (SyntaxError,IndentationError,TabError) as exc:\n        return {'ok':False,'diagnostic':analyze_error(exc,source)}\n\n\n#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\"\"\"AI’Han Kod Mutfağı - pedagogical execution trace, also embedded into Pyodide.\n\nSnapshots are retrospective: the program actually runs and its bounded history is\ncaptured; the interface replays that history. This is not a step-controlled debugger.\n\"\"\"\nimport ast\nimport builtins\nimport contextlib\nimport io\nimport json\nimport reprlib\nimport sys\nimport traceback\nfrom pathlib import Path\n\nMAX_STEPS = 600\nMAX_TEXT = 16000\nMAX_VARS = 24\nMAX_VALUE = 160\n\nclass LimitReached(Exception):\n    pass\n\nclass LimitedText(io.StringIO):\n    def write(self, s):\n        remaining = MAX_TEXT - len(self.getvalue())\n        if remaining > 0:\n            super().write(str(s)[:remaining])\n        return len(s)\n\n\ndef _literal(n):\n    try:\n        text = ast.unparse(n)\n        return text if len(text) <= 74 else text[:71] + '…'\n    except Exception:\n        return 'ifade'\n\n\ndef _description(node, line):\n    \"\"\"Explicit, conservative explanations: avoid claiming a branch was taken.\"\"\"\n    if node is None:\n        return 'Python bu satırdaki ifadeyi değerlendirir.'\n    if isinstance(node, (ast.Assign, ast.AnnAssign, ast.NamedExpr)):\n        targets = getattr(node, 'targets', [getattr(node, 'target', None)])\n        names = ', '.join(_literal(t) for t in targets if t is not None)\n        return f'{names} değişkenine sağdaki ifadenin sonucunu atar.'\n    if isinstance(node, ast.AugAssign):\n        ops = {ast.Add:'toplar', ast.Sub:'çıkarır', ast.Mult:'çarpar', ast.Div:'böler', ast.Mod:'modunu alır'}\n        verb = ops.get(type(node.op), 'işlem uygular')\n        return f'{_literal(node.target)} değişkeninin mevcut değeriyle sağdaki değeri {verb}; sonucu yeniden saklar.'\n    if isinstance(node, ast.For):\n        return f'{_literal(node.iter)} içindeki sıradaki öğeyi {_literal(node.target)} değişkenine alır; her turda döngü gövdesini yeniden çalıştırır.'\n    if isinstance(node, ast.AsyncFor):\n        return 'Asenkron kaynaktan sıradaki öğeyi alır.'\n    if isinstance(node, ast.While):\n        return f'{_literal(node.test)} koşulunu sınar; True olduğu sürece döngüyü sürdürür.'\n    if isinstance(node, ast.If):\n        return f'{_literal(node.test)} koşulunu değerlendirir; doğru veya yanlış olmasına göre farklı satırlara geçer.'\n    if isinstance(node, ast.FunctionDef):\n        return f'{node.name} adlı fonksiyonu tanımlar; içindeki satırlar fonksiyon çağrıldığında çalışır.'\n    if isinstance(node, ast.AsyncFunctionDef):\n        return f'{node.name} adlı asenkron fonksiyonu tanımlar.'\n    if isinstance(node, ast.ClassDef):\n        return f'{node.name} adlı sınıfın tanımını oluşturur.'\n    if isinstance(node, ast.Return):\n        return 'Hesaplanan sonucu çağıran yere döndürür ve fonksiyondan çıkar.'\n    if isinstance(node, ast.Import):\n        return 'İstenen Python modülünü yükler veya önceden yüklenmiş modülü kullanır.'\n    if isinstance(node, ast.ImportFrom):\n        return f'{node.module or \"modül\"} modülünden belirtilen adları içe aktarır.'\n    if isinstance(node, ast.Expr):\n        val = node.value\n        if isinstance(val, ast.Call):\n            fn = _literal(val.func)\n            if fn == 'print': return 'print() içindeki ifadeleri hesaplar ve değerlerini çıktı alanına yazar.'\n            if fn == 'input': return 'Kullanıcıdan metin girişi ister; gelen yanıt bir str değeridir.'\n            if fn.endswith('.append'): return 'Listeye yeni bir öğe ekler. Listenin değişimini takip et.'\n            if fn.endswith('.sort'): return 'Listeyi yerinde sıralar.'\n            return f'{fn} fonksiyonunu çağırır; gerekli hesaplamaları gerçekleştirir.'\n        if isinstance(val, ast.Constant) and isinstance(val.value, str):\n            return 'Bu satırda bir metin sabiti (çoğu zaman açıklayıcı belge dizgesi) bulunuyor.'\n        return 'İfadeyi hesaplar; elde edilen sonuç başka bir yere atanmayabilir.'\n    if isinstance(node, ast.Try): return 'Hata oluşma ihtimali bulunan kod bloğunu çalıştırmaya başlar.'\n    if isinstance(node, ast.ExceptHandler): return 'Belirtilen türde bir hata oluştuysa onu yakalar ve ilgili çözüm satırlarını çalıştırır.'\n    if isinstance(node, (ast.With, ast.AsyncWith)): return 'Kaynağı kontrollü şekilde açar; blok bitince gerekli kapatma işlemlerini yapar.'\n    if isinstance(node, ast.Raise): return 'Bir hata (exception) oluşturur veya var olan hatayı yeniden iletir.'\n    if isinstance(node, ast.Assert): return 'Koşulu sınar; yanlışsa AssertionError üretir.'\n    if isinstance(node, ast.Pass): return 'Bilerek hiçbir işlem yapmaz; boş bir kod bloğunu belirtir.'\n    if isinstance(node, ast.Break): return 'İçinde bulunduğu döngüden hemen çıkar.'\n    if isinstance(node, ast.Continue): return 'Döngünün kalan bölümünü atlayıp sonraki tura geçer.'\n    if isinstance(node, ast.Delete): return 'Belirtilen değişkeni veya öğeyi siler.'\n    return 'Bu satırdaki Python işlemini gerçekleştirir.'\n\n\ndef line_explanations(source):\n    tree = ast.parse(source, filename='main.py')\n    nodes = {}\n    # ast.walk visits the enclosing statement before nested expressions.\n    for node in ast.walk(tree):\n        if isinstance(node, (ast.stmt, ast.ExceptHandler)) and hasattr(node,'lineno'):\n            nodes.setdefault(node.lineno, node)\n    return {ln: _description(node, (source.splitlines() or [''])[ln - 1]) for ln, node in nodes.items()}\n\n\ndef _safe_repr(value):\n    if isinstance(value, (int, bool, float, complex, str, bytes, type(None), list, tuple, set, dict)):\n        try:\n            r = reprlib.Repr()\n            r.maxstring = 92\n            r.maxother = 110\n            r.maxlist = 6\n            r.maxdict = 5\n            r.maxtuple = 6\n            r.maxset = 6\n            r.maxlevel = 3\n            result = r.repr(value)\n        except Exception:\n            result = f'<{type(value).__name__}>'\n    elif callable(value):\n        result = f'<{getattr(value,\"__name__\",type(value).__name__)}>'\n    else:\n        # Do not accidentally execute arbitrary __repr__ on student objects.\n        result = f'<{type(value).__name__} nesnesi>'\n    return result[:MAX_VALUE]\n\n\ndef _snapshot(frame):\n    data = {}\n    namespace = frame.f_locals\n    # A function uses local variables. The module view uses module globals.\n    for k, v in list(namespace.items()):\n        if not isinstance(k, str) or k.startswith('_') or k in ('__builtins__',):\n            continue\n        if len(data) >= MAX_VARS:\n            data['…'] = 'Diğer değişkenler gösterilmiyor'\n            break\n        if getattr(type(v), '__name__', '') == 'module':\n            continue\n        data[k] = _safe_repr(v)\n    return data\n\n\ndef _error_hint(exc):\n    name = type(exc).__name__\n    return {\n        'NameError': 'Değişken adını ve tanımlandığı satırı kontrol et. Python büyük/küçük harfe duyarlıdır.',\n        'TypeError': 'İşlemde kullanılan değerlerin türlerini karşılaştır. Örneğin str ile int doğrudan toplanamaz.',\n        'ValueError': 'Değer beklenen biçimde değil. Dönüştürme ve giriş bilgisini denetle.',\n        'ZeroDivisionError': 'Bir sayıyı sıfıra bölemezsin. Bölenden önce sıfır kontrolü ekle.',\n        'IndexError': 'Listenin sınırlarının dışındaki bir öğeye erişilmiş. İndeks 0’dan başlar.',\n        'KeyError': 'Sözlükte bulunmayan bir anahtar okunmuş. Anahtarları kontrol et.',\n        'IndentationError': 'İç içe blokların girintilerini kontrol et. Aynı bloktaki satırlar hizalı olmalı.',\n        'SyntaxError': 'Parantez, iki nokta, tırnak ve Python sözdizimini kontrol et.',\n        'ModuleNotFoundError': 'Modül kurulu olmayabilir. Paket yöneticisinden desteklenen modülü yükle.',\n        'EOFError': 'input() için giriş alanına gerekli yanıtları her satıra bir tane yaz.',\n        'AssertionError': 'assert ile belirtilen koşul sağlanmadı. Beklenen ve gerçek değerleri karşılaştır.',\n        'TraceLimit': 'Eğitim kaydı çok uzun. Döngüyü küçültüp yeniden dene.',\n        'LimitReached': 'Eğitim için en fazla 600 adım kaydedilir; döngünün sınırını veya kodu kısalt.',\n    }.get(name, 'Hata mesajını ve vurgulanan satırı incele. Değişkenlerin değerlerini karşılaştır.')\n\n\ndef trace_run(source, stdin='', max_steps=MAX_STEPS):\n    \"\"\"Run student code and return a finite, truthful sequence of executed lines.\"\"\"\n    if not isinstance(source,str): return {'ok':False,'steps':[],'stdout':'','error':'Kod metni geçersiz.'}\n    if len(source) > 150_000: return {'ok':False,'steps':[],'stdout':'','error':'Öğrenme modu için kod çok uzun (150 KB sınırı).'}\n    if len(source.splitlines()) > 2000: return {'ok':False,'steps':[],'stdout':'','error':'Öğrenme modu 2.000 satırla sınırlı.'}\n    try:\n        explanations = line_explanations(source)\n        compiled = compile(source, 'main.py', 'exec')\n    except (SyntaxError, IndentationError) as exc:\n        line = max(1, exc.lineno or 1)\n        diagnostic = analyze_error(exc, source)\n        return {'ok':False, 'steps':[{'line':line,'scope':'ana program','before':{},'after':{},'changes':[],\n             'explain':diagnostic['explanation'], 'out':'', 'error':diagnostic['title'], 'hint':diagnostic['suggestion']}],\n             'stdout':'', 'error':diagnostic['title'], 'hint':diagnostic['suggestion'],\n             'diagnostic':diagnostic,'partial':False,'line_help':{}}\n    buffer = LimitedText()\n    inputs = iter(stdin.splitlines() if isinstance(stdin,str) else [])\n    old_input = builtins.input\n    old_trace = sys.gettrace()\n    steps = []\n    pending = {}\n    limit_hit = False\n    active_item = None\n    last_output_pos = 0\n\n    def fake_input(prompt=''):\n        try:\n            answer = next(inputs)\n        except StopIteration:\n            raise EOFError('input() için giriş alanında yeterli satır bulunamadı.')\n        buffer.write(str(prompt) + answer + '\\n')\n        return answer\n\n    def finalize(frame, return_value=None):\n        item = pending.pop(id(frame), None)\n        if item is None: return\n        after = _snapshot(frame)\n        item['after'] = after\n        before = item['before']\n        item['changes'] = [{'name':key,'from':before.get(key, '—'), 'to':after.get(key,'(silindi)')}\n                         for key in after.keys() | before.keys() if before.get(key) != after.get(key)][:16]\n        item['changes'].sort(key=lambda x: x['name'])\n        if return_value is not None and item['scope'] != 'ana program':\n            item['returned'] = _safe_repr(return_value)\n\n    def flush_output():\n        nonlocal last_output_pos\n        contents = buffer.getvalue()\n        if active_item is not None and len(contents) > last_output_pos:\n            active_item['out'] += contents[last_output_pos:]\n        last_output_pos = len(contents)\n\n    def on_trace(frame, event, arg):\n        nonlocal limit_hit, active_item\n        if frame.f_code.co_filename != 'main.py': return None\n        if event == 'call': return on_trace\n        flush_output()\n        if event == 'line':\n            finalize(frame)\n            if len(steps) >= max_steps:\n                limit_hit = True\n                raise LimitReached('Öğrenme modu adım sınırına ulaştı.')\n            line = frame.f_lineno\n            item = {'line':line, 'scope':frame.f_code.co_name if frame.f_code.co_name != '<module>' else 'ana program',\n                    'before':_snapshot(frame), 'after':{}, 'changes':[], 'out':'', 'explain':explanations.get(line, 'Bu satırdaki Python ifadesi yürütülür.'),\n                    }\n            steps.append(item)\n            pending[id(frame)] = item\n            active_item = item\n        elif event == 'return':\n            finalize(frame, return_value=arg)\n            active_item = pending.get(id(frame.f_back)) if frame.f_back else None\n        # Exceptions can be caught by the user's code; only mark unhandled exceptions below.\n        return on_trace\n\n    status = True\n    error = ''\n    hint = ''\n    diagnostic = None\n    code_scope = {'__name__':'__main__','__file__':'main.py','__package__':None}\n    builtins.input = fake_input\n    try:\n        with contextlib.redirect_stdout(buffer), contextlib.redirect_stderr(buffer):\n            sys.settrace(on_trace)\n            try:\n                exec(compiled, code_scope)\n            finally:\n                sys.settrace(old_trace)\n                flush_output()\n    except BaseException as exc:\n        status = False\n        diagnostic = analyze_error(exc, source)\n        error = diagnostic['title']\n        hint = diagnostic['suggestion']\n        frames = traceback.extract_tb(exc.__traceback__)\n        relevant = [f for f in frames if f.filename == 'main.py']\n        err_line = relevant[-1].lineno if relevant else (steps[-1]['line'] if steps else 1)\n        if steps:\n            # Show a distinct error event if the point of failure is not the last recorded line.\n            idx = next((i for i in range(len(steps)-1,-1,-1) if steps[i]['line']==err_line), len(steps)-1)\n            steps[idx]['error'] = error\n            steps[idx]['hint'] = hint\n        else:\n            steps.append({'line':err_line,'scope':'ana program','before':{},'after':{},'changes':[],\n                          'out':'','explain':'Bu satırda bir hata oluştu.','error':error,'hint':hint})\n    finally:\n        sys.settrace(old_trace)\n        builtins.input = old_input\n        # A raised exception skips the final return event.\n        for obj in list(pending.values()):\n            obj['after'] = obj['before']\n        pending.clear()\n    if limit_hit:\n        error = 'Adım sınırına ulaşıldı (600 yürütülen satır). Döngü tekrar sayısını düşür.'\n    return {'ok':status, 'steps':steps, 'stdout':buffer.getvalue(), 'error':error,\n            'hint':hint, 'diagnostic':diagnostic, 'partial':limit_hit, 'max_steps':max_steps,'line_help':explanations}\n\n\ndef cli():\n    import argparse\n    parser = argparse.ArgumentParser()\n    parser.add_argument('code_file')\n    parser.add_argument('input_file')\n    args = parser.parse_args()\n    source = Path(args.code_file).read_text(encoding='utf-8')\n    stdin = Path(args.input_file).read_text(encoding='utf-8')\n    result = trace_run(source, stdin)\n    print(json.dumps(result, ensure_ascii=False, separators=(',',':')))\n\nif __name__ == '__main__':\n    cli()\n";
+  const PYODIDE_BASE = 'https://cdn.jsdelivr.net/pyodide/v314.0.8/full/';
+  const PYODIDE_FALLBACK = 'https://cdn.jsdelivr.net/pyodide/v0.29.5/full/';
+  const PYODIDE_RUNNER = "import ast, inspect, json\nasync def _aihan_execute_source(src):\n    try:\n        program = compile(src, 'main.py', 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)\n        namespace = {'__name__':'__main__', '__file__':'main.py', '__package__':None}\n        outcome = eval(program, namespace)\n        if inspect.isawaitable(outcome):\n            await outcome\n        return None\n    except BaseException as exc:\n        return analyze_error(exc,src)\n_aihan_execution_payload = json.dumps(await _aihan_execute_source(_aihan_source), ensure_ascii=False)";
+  // Tarayıcı modunda tek Python altyapısı: Web Worker + Pyodide.
+  // Kullanıcı Python kodu harici sunucumuza gönderilmez.
+  const pythonWorkerSource = String.raw`
+    let py = null;
+    let bootPromise = null;
+    let processing = Promise.resolve();
+    const send = (kind,id,extra={}) => self.postMessage({kind,id,...extra});
+    const bases = ['${PYODIDE_BASE}','${PYODIDE_FALLBACK}'];
+    const defaultPackages=['micropip','numpy','pandas','matplotlib','scipy','scikit-learn','pillow','sympy','requests','beautifulsoup4','networkx'];
+    const PY_MODULE_PACKAGE={PIL:'pillow',sklearn:'scikit-learn',bs4:'beautifulsoup4',cv2:'opencv-python',yaml:'pyyaml',skimage:'scikit-image',dateutil:'python-dateutil',Crypto:'pycryptodome'};
+    async function preload(runtime,id){
+      const failures=[];
+      for(let i=0;i<defaultPackages.length;i++){
+        const pkg=defaultPackages[i];
+        send('package-progress',id,{name:pkg,current:i,total:defaultPackages.length,stage:'start'});
+        try{ await runtime.loadPackage(pkg);
+          send('package-progress',id,{name:pkg,current:i+1,total:defaultPackages.length,stage:'ok'});
+        }catch(e){
+          failures.push(pkg);
+          send('package-progress',id,{name:pkg,current:i+1,total:defaultPackages.length,stage:'fail',error:String(e?.message||e).slice(0,180)});
+        }
+      }
+      return failures;
+    }
+    async function autoLoadImports(runtime,code,id){
+      send('status',id,{message:'Kodun kullandığı Python kütüphaneleri denetleniyor…'});
+      await runtime.loadPackagesFromImports(code);
+      runtime.globals.set('_aihan_import_source',code);
+      const mods=JSON.parse(runtime.runPython('import ast,sys,json,importlib.util\n_aihan_parsed=ast.parse(_aihan_import_source)\n_aihan_modules=set()\nfor _node in ast.walk(_aihan_parsed):\n if isinstance(_node, ast.Import):\n  _aihan_modules.update(_x.name.split(".")[0] for _x in _node.names)\n elif isinstance(_node, ast.ImportFrom) and _node.level == 0 and _node.module:\n  _aihan_modules.add(_node.module.split(".")[0])\n_aihan_missing=[m for m in sorted(_aihan_modules) if m not in sys.stdlib_module_names and m not in ("js","pyodide","micropip") and importlib.util.find_spec(m) is None]\njson.dumps(_aihan_missing)'));
+      if(!mods.length)return;
+      await runtime.loadPackage('micropip');
+      for(const mod of mods){
+        const pkg=PY_MODULE_PACKAGE[mod]||mod.replace(/_/g,'-');
+        send('status',id,{message:'Eksik Python paketi otomatik yükleniyor: '+pkg});
+        try{await runtime.runPythonAsync('import micropip\nawait micropip.install('+JSON.stringify(pkg)+')');}
+        catch(e){throw new Error('"'+mod+'" için '+pkg+' kurulamadı. Paket tarayıcı/WebAssembly ortamında desteklenmeyebilir. Ayrıntı: '+String(e?.message||e).slice(0,550));}
+      }
+    }
+    async function boot(id) {
+      if (py) return py;
+      if (bootPromise) return bootPromise;
+      bootPromise = (async()=> {
+        let last;
+        for (const base of bases) {
+          try {
+            send('status',id,{message:'Python motoru indiriliyor (ilk kullanım internet gerektirir)…'});
+            const m = await import(base+'pyodide.mjs');
+            const instance = await m.loadPyodide({indexURL:base});
+            send('status',id,{message:'Pyodide hazır · Python '+instance.runPython('import sys;sys.version.split()[0]')});
+            send('engine-ready',id,{});
+            return (py=instance);
+          } catch(e) { last=e; send('status',id,{message:'Kaynak yüklenemedi; alternatif Pyodide sürümü deneniyor…'}); }
+        }
+        throw new Error('Python motoru indirilemedi. İnternet veya CDN erişimini kontrol edin. Teknik ayrıntı: '+String(last?.message||last));
+      })();
+      try { return await bootPromise; } finally { bootPromise=null; }
+    }
+    async function perform(d) {
+      const {kind,id,code='',stdin='',packages=[],helper='',diagnostics=''}=d;
+      try {
+        const runtime=await boot(id);
+        runtime.setStdout({batched:v=>send('out',id,{message:String(v).slice(0,50000)})});
+        runtime.setStderr({batched:v=>send('err',id,{message:String(v).slice(0,50000)})});
+        if(kind==='ready' || kind==='warm'){
+          send('status',id,{message:'Temel Python kütüphaneleri otomatik hazırlanıyor…'});
+          const failures=await preload(runtime,id);
+          send('done',id,{ok:true,preloadFailures:failures});return;
+        }
+        if(kind==='check') {
+          runtime.globals.set('_aihan_source',String(code));
+          await runtime.runPythonAsync(diagnostics+'\nimport json\n_aihan_check_payload=json.dumps(check_syntax(_aihan_source),ensure_ascii=False)');
+          send('check',id,{result:JSON.parse(runtime.globals.get('_aihan_check_payload'))});
+          send('done',id,{ok:true});return;
+        }
+        if(kind==='install') {
+          send('status',id,{message:'micropip hazırlanıyor…'});
+          await runtime.loadPackage('micropip');
+          send('status',id,{message:'Uyumlu paketler kuruluyor: '+packages.join(', ')});
+          await runtime.runPythonAsync('import micropip\nawait micropip.install('+JSON.stringify(packages)+')');
+          send('out',id,{message:'Paketler hazır: '+packages.join(', ')});
+          send('done',id,{ok:true});return;
+        }
+        runtime.globals.set('_aihan_source',String(code));
+        await runtime.runPythonAsync(diagnostics+'\nimport json\n_aihan_check_payload=json.dumps(check_syntax(_aihan_source),ensure_ascii=False)');
+        const syntax=JSON.parse(runtime.globals.get('_aihan_check_payload'));
+        if(!syntax.ok){send('diagnostic',id,{diagnostic:syntax.diagnostic});send('done',id,{ok:false});return;}
+        const stdinLines=String(stdin).split(/\r?\n/);
+        runtime.setStdin({stdin:()=>stdinLines.length?stdinLines.shift():null,autoEOF:true});
+        send('status',id,{message:'Kullanılan Python paketleri kontrol ediliyor…'});
+        await autoLoadImports(runtime,code,id);
+        // Grafikler kapatılmadan bellek içinden PNG yakalanır.
+        runtime.runPython('import os;os.environ["MPLBACKEND"]="Agg"');
+        if(kind==='trace') {
+          send('status',id,{message:'Satırların gerçek yürütme kaydı hazırlanıyor…'});
+          runtime.globals.set('_aihan_trace_source',String(code));
+          runtime.globals.set('_aihan_trace_input',String(stdin));
+          await runtime.runPythonAsync(helper+'\n_aihan_trace_result=json.dumps(trace_run(_aihan_trace_source,_aihan_trace_input),ensure_ascii=False)');
+          const res=JSON.parse(runtime.globals.get('_aihan_trace_result'));
+          send('trace',id,{result:res});send('done',id,{ok:!!res.ok});return;
+        }
+        send('status',id,{message:'Python kodu çalışıyor…'});
+        const runner=${JSON.stringify(PYODIDE_RUNNER)};
+        await runtime.runPythonAsync(runner);
+        const diagnostic=JSON.parse(runtime.globals.get('_aihan_execution_payload'));
+        if(diagnostic){send('diagnostic',id,{diagnostic});send('done',id,{ok:false});return;}
+        try {
+          const figures=runtime.runPython('import sys,io,base64,json\n_aihan_imgs=[]\nif "matplotlib.pyplot" in sys.modules:\n import matplotlib.pyplot as _plt\n for _num in _plt.get_fignums()[:5]:\n  _buf=io.BytesIO()\n  _plt.figure(_num).savefig(_buf,format="png",dpi=115,bbox_inches="tight")\n  _aihan_imgs.append(base64.b64encode(_buf.getvalue()).decode("ascii"))\n _plt.close("all")\njson.dumps(_aihan_imgs)');
+          for (const pic of JSON.parse(figures)) send('image',id,{base64:pic});
+        } catch(e) {send('err',id,{message:'Grafik görüntülenemedi: '+String(e.message||e)});}
+        send('done',id,{ok:true});
+      } catch(e) {
+        let message=String(e?.message||e);
+        const isImport=/No module named|ModuleNotFoundError|No known package|can't find a pure Python 3 wheel|unsupported|micropip/i.test(message);
+        if(isImport) message='Kütüphane yükleme hatası: '+message+'\nBu paket tarayıcı/Pyodide için uygun olmayabilir. Paket adını ve destek durumunu kontrol edin.';
+        else message='Python motoru veya çalışma hatası: '+message;
+        send('err',id,{message});send('done',id,{ok:false});
+      }
+    }
+    self.onmessage=({data})=>{
+      if(!data||!['ready','warm','check','run','trace','install'].includes(data.kind))return;
+      // Komutları sırayla işle; yeni istek sessizce kaybolmaz.
+      processing=processing.then(()=>perform(data)).catch(e=>send('err',data.id,{message:String(e?.message||e)}));
+    };
+  `;
+  let activeDiagnostic=null;
+  let runTimer=null;
+  let runWarning=null;
+  let currentRunKind='run';
+  let engineReady=false;
+  let pendingCode='';
+  function clearDiagnostic(){
+    activeDiagnostic=null;
+    $('#pythonDiagnostic').hidden=true;
+    $('#diagApplyFix').hidden=true;
+    $('#traceLineWash').classList.remove('is-error');
+    $('#traceGutterMark').classList.remove('is-error');
+    if(traceView!=='learn'||!traceResult?.steps?.length)highlightTraceLine(null);
+  }
+  function scrollToPythonLine(line,col=1){
+    if(!Number.isInteger(line)||line<1)return;
+    const offset=editor.value.split('\n').slice(0,line-1).join('\n').length+(line>1?1:0);
+    editor.focus();editor.setSelectionRange(offset+Math.max(0,col-1),offset+Math.max(0,col-1));
+    editor.scrollTop=Math.max(0, 19+(line-1)*24-editor.clientHeight/2);
+    renderCursor();syncScroll();highlightTraceLine(line);
+  }
+  function renderDiagnostic(diag,autoNavigate=false){
+    if(!diag||typeof diag!=='object')return;
+    activeDiagnostic=diag;
+    $('#pythonDiagnostic').hidden=false;
+    $('#diagTitle').textContent=diag.title||'Python hatası';
+    $('#diagPosition').textContent=diag.line?'Satır '+diag.line+(diag.column?' · Sütun '+diag.column:''):'Konum belirlenemedi';
+    $('#diagExplanation').textContent=diag.explanation||'Kod çalıştırılırken bir hata oluştu.';
+    $('#diagSuggestion').textContent=diag.suggestion||'İlgili satırı kontrol et.';
+    // Öğrenci kodu güvenli metin düğümleriyle görüntülenir; HTML olarak işlenmez.
+    const pre=$('#diagSnippet');pre.replaceChildren();
+    const code=String(diag.code||'');
+    const col=Math.max(0,Number(diag.column||1)-1),end=Math.max(col+1,Number(diag.end_column||diag.column||1));
+    if(code){
+      pre.append(document.createTextNode(code.slice(0,col)));
+      const mark=document.createElement('span');mark.className='under-error';mark.textContent=code.slice(col,end)||code[col]||' ';
+      pre.append(mark,document.createTextNode(code.slice(end)));
+    }else{pre.textContent='Satır bilgisi bulunamadı.';}
+    const fix=diag.fix,liveLine=diag.line&&state.python.split('\n')[diag.line-1];
+    const validFix=fix&&Number.isInteger(fix.line)&&fix.original===liveLine&&typeof fix.replacement==='string'&&fix.replacement!==fix.original;
+    $('#diagApplyFix').hidden=!validFix;
+    $('#diagApplyFix').textContent=validFix?fix.label||'Önerilen düzeltmeyi uygula':'Düzeltmeyi uygula';
+    $('#diagProposal').hidden=!validFix;
+    $('#diagProposal').textContent=validFix?'Önerilen kod: '+fix.replacement:'';
+    $('#diagGoToLine').disabled=!Number.isInteger(diag.line);
+    $('#syntaxFeedback').textContent='Türkçe hata açıklaması hazır.';
+    if(Number.isInteger(diag.line)&&state.mode==='python'){
+      $('#traceLineWash').classList.add('is-error');
+      $('#traceGutterMark').classList.add('is-error');
+      if(autoNavigate)scrollToPythonLine(diag.line,diag.column);
+      else highlightTraceLine(diag.line);
+    }
+  }
+  $('#diagGoToLine').addEventListener('click',()=>{if(activeDiagnostic?.line)scrollToPythonLine(activeDiagnostic.line,activeDiagnostic.column);});
+  $('#diagClose').addEventListener('click',clearDiagnostic);
+  $('#diagApplyFix').addEventListener('click',()=>{
+    const f=activeDiagnostic?.fix;
+    if(!f)return;
+    const lines=state.python.split('\n');
+    if(lines[f.line-1]!==f.original){notify('Kod değişti; önce yeniden denetle.');return;}
+    lines[f.line-1]=f.replacement;state.python=lines.join('\n');
+    editor.value=state.python;renderSyntax();invalidateTrace();clearDiagnostic();
+    scrollToPythonLine(f.line);$('#syntaxFeedback').textContent='Öneri uygulandı. Kodu yeniden denetleyebilirsin.';
+    scheduleSyntaxCheck();
+  });
+
+  function scheduleSyntaxCheck(){
+    if(state.mode==='python')$('#syntaxFeedback').textContent='Kod değişti. Türkçe kontrol için Sözdizimini denetle.';
+  }
+  function setPythonStatus(message){
+    $('#pythonRuntime').textContent=message;
+    if(state.mode==='python')$('#runState').textContent=message;
+  }
+  function pythonLine(message,kind='stdout'){
+    const el=$('#pythonOutput');el.querySelector('.python-welcome')?.remove();
+    const row=document.createElement('div');
+    row.className='python-out-line '+(kind==='stderr'?'py-error':kind==='status'?'py-status':'');
+    row.textContent=String(message).slice(0,100000);el.append(row);
+    while(el.childElementCount>450)el.firstElementChild.remove();el.scrollTop=el.scrollHeight;
+  }
+  function pythonImage(pic){
+    if(!pic||pic.length>9000000){pythonLine('Grafik boyutu çok büyük; çizimi küçültün.','stderr');return;}
+    const el=$('#pythonFigures');el.hidden=false;
+    const label=document.createElement('span');label.className='python-figure-label';label.textContent='GRAFİK '+(el.querySelectorAll('img').length+1);
+    const img=document.createElement('img');img.alt='Python Matplotlib grafiği';img.src='data:image/png;base64,'+pic;el.append(label,img);
+  }
+  function clearPythonTimers(){clearTimeout(runTimer);clearTimeout(runWarning);runTimer=null;runWarning=null;}
+  function finishPython(ok){
+    clearPythonTimers();state.pythonRunning=false;
+    $('#runButton').disabled=false;$('#installPackages').disabled=false;
+    $('#checkPythonSyntax').disabled=false;$('#pythonHealth').disabled=false;
+    $('#tracePython').disabled=false;$('#stopPython').textContent='Sıfırla';
+    if(currentRunKind==='check'&&!ok)$('#syntaxFeedback').textContent='Denetim tamamlanamadı. Yukarıdaki Python motoru hata mesajını inceleyin.';
+    setPythonStatus(ok?'Tamamlandı · Python hazır':'İşlem sonlandırıldı veya hata oluştu');
+    if(ok&&currentRunKind==='run')evaluateMission();
+  }
+  function destroyWorker(){
+    if(pythonWorker){pythonWorker.terminate();pythonWorker=null;}
+    if(pythonWorkerURL){URL.revokeObjectURL(pythonWorkerURL);pythonWorkerURL=null;}
+    engineReady=false;
+  }
+  function stopPython(message='İşlem durduruldu. Python motoru yeniden başlatılabilir.'){
+    ++state.pyRunNumber;
+    destroyWorker();clearPythonTimers();
+    state.pythonRunning=false;
+    $('#runButton').disabled=false;$('#installPackages').disabled=false;
+    $('#checkPythonSyntax').disabled=false;$('#pythonHealth').disabled=false;
+    $('#tracePython').disabled=false;$('#stopPython').textContent='Sıfırla';
+    setPythonStatus('Durduruldu · yeniden çalıştırılabilir');
+    if(state.mode==='python')pythonLine(message,'status');
+  }
+  function makePythonWorker(){
+    if(pythonWorker)return pythonWorker;
+    pythonWorkerURL=URL.createObjectURL(new Blob([pythonWorkerSource],{type:'text/javascript'}));
+    try{pythonWorker=new Worker(pythonWorkerURL,{type:'module'});}
+    catch(e){URL.revokeObjectURL(pythonWorkerURL);pythonWorkerURL=null;throw new Error('Tarayıcı Python Worker oluşturulamadı: '+e.message);}
+    const worker=pythonWorker;
+    worker.onmessage=({data})=>{
+      if(worker!==pythonWorker||data?.id!==state.pyRunNumber)return;
+      if(data.kind==='status')setPythonStatus(data.message);
+      else if(data.kind==='engine-ready')engineReady=true;
+      else if(data.kind==='package-progress'){
+        const percentage=Math.round(data.current/Math.max(1,data.total)*100);
+        $('#pyPackBar').style.width=percentage+'%';
+        $('#pyPackProgress').setAttribute('aria-valuenow',String(percentage));
+        $('#pyPackLabel').textContent=(data.stage==='start'?'Hazırlanıyor: ':data.stage==='ok'?'Hazır: ':'Yüklenemedi: ')+data.name+' · '+percentage+'%';
+        if(data.stage==='ok'||data.stage==='fail'){
+          let tag=$('#pyPackBadges').querySelector('[data-pack="'+data.name+'"]');
+          if(!tag){tag=document.createElement('span');tag.dataset.pack=data.name;$('#pyPackBadges').append(tag);}
+          tag.textContent=data.name+(data.stage==='fail'?' · hata':'');
+          tag.setAttribute('aria-invalid',String(data.stage==='fail'));
+        }
+      }
+      else if(data.kind==='out')pythonLine(data.message);
+      else if(data.kind==='err')pythonLine(data.message,'stderr');
+      else if(data.kind==='image')pythonImage(data.base64);
+      else if(data.kind==='trace'){
+        if(state.python===pendingCode)receiveTrace(data.result);
+        else pythonLine('Kod değiştirildi; eski yürütme kaydı gösterilmedi.','status');
+      }
+      else if(data.kind==='diagnostic'){
+        if(state.python===pendingCode)renderDiagnostic(data.diagnostic,true);
+      }
+      else if(data.kind==='check'){
+        if(state.python===pendingCode){
+          if(data.result?.ok){clearDiagnostic();$('#syntaxFeedback').textContent='Sözdizimi geçerli. Çalışma zamanı hataları için Çalıştır düğmesini kullan.';}
+          else renderDiagnostic(data.result?.diagnostic,true);
+        }
+      }
+      else if(data.kind==='done'){
+        if(currentRunKind==='ready'||currentRunKind==='warm'){
+          const missed=(data.preloadFailures||[]);
+          pythonLine('Python hazır. '+(missed.length?'Bazı isteğe bağlı paketler yüklenemedi: '+missed.join(', '):'Otomatik Python kütüphaneleri hazır.'),'status');
+          if(!missed.length)$('#pyPackLabel').textContent='Otomatik kütüphaneler hazır';
+        }
+        if(currentRunKind==='install'&&data.ok)pythonLine('Uyumlu paket kuruldu; şimdi kodunu çalıştırabilirsin.','status');
+        finishPython(!!data.ok);
+      }
+    };
+    worker.onerror=e=>{
+      if(worker!==pythonWorker)return;
+      pythonLine('Python Worker başlatılamadı. Tarayıcı güvenlik ayarları veya ağ/CDN erişimi engellenmiş olabilir. Teknik bilgi: '+(e.message||'Worker hatası'),'stderr');
+      $('#pyPackLabel').textContent='Python motoru yüklenemedi · CDN/HTTPS erişimini kontrol et';
+      destroyWorker();++state.pyRunNumber;finishPython(false);e.preventDefault?.();
+    };
+    worker.onmessageerror=()=>{pythonLine('Python Worker veri iletişiminde hata oluştu.','stderr');stopPython();};
+    return worker;
+  }
+  function parsePackages(raw){
+    const names=raw.trim().split(/[\s,]+/).filter(Boolean);
+    if(!names.length)throw Error('Önce paket adı yaz.');
+    if(names.length>12)throw Error('Bir seferde en fazla 12 paket seç.');
+    const pattern=/^[a-zA-Z0-9][a-zA-Z0-9_.-]*(?:\[[a-zA-Z0-9_,.-]+\])?(?:(?:==|>=|<=|~=|>|<)[a-zA-Z0-9.*+_-]+)?$/;
+    for(const name of names)if(!pattern.test(name))throw Error('Geçersiz paket adı: '+name);
+    return names;
+  }
+  function startRunTimeout(id){
+    runWarning=setTimeout(()=>{
+      if(state.pythonRunning&&state.pyRunNumber===id)pythonLine('Yükleme uzun sürüyor. İlk açılışta Python motoru ve paketler internetten indirilir; gerekirse Durdur düğmesini kullan.','status');
+    },12000);
+    runTimer=setTimeout(()=>{
+      if(state.pythonRunning&&state.pyRunNumber===id){
+        pythonLine('İşlem için tanınan süre aşıldı. Takılmayı önlemek amacıyla Python motoru durduruldu. İnternet ve paket uyumluluğunu kontrol et.','stderr');
+        stopPython('Zaman aşımı nedeniyle işlem sonlandırıldı.');
+      }
+    },currentRunKind==='warm'||currentRunKind==='ready'?300000:150000);
+  }
+  function startPythonTask(kind, payload={}){
+    if(state.pythonRunning){notify('Önce mevcut işlemi durdur veya tamamlanmasını bekle.');return false;}
+    state.pythonRunning=true;currentRunKind=kind;pendingCode=state.python;
+    if(kind==='warm'){$('#pyPackBar').style.width='0%';$('#pyPackProgress').setAttribute('aria-valuenow','0');$('#pyPackBadges').replaceChildren();}
+    const id=++state.pyRunNumber;
+    for(const key of ['runButton','installPackages','checkPythonSyntax','pythonHealth','tracePython'])$('#'+key).disabled=true;
+    $('#stopPython').textContent='Durdur';
+    setPythonStatus(kind==='warm'?'Python ve kütüphaneler ilk kullanım için hazırlanıyor…':engineReady?'Python hazırlanıyor…':'Pyodide başlatılıyor…');
+    startRunTimeout(id);
+    try{
+      makePythonWorker().postMessage({kind,id,...payload,diagnostics:DIAGNOSTICS_HELPER});
+    }catch(e){pythonLine('Python başlatılamadı: '+e.message,'stderr');stopPython('Motor başlatılamadı.');return false;}
+    return true;
+  }
+  function checkPythonSyntax(){
+    if(!state.python.trim()){clearDiagnostic();$('#syntaxFeedback').textContent='Önce Python kodu yaz.';return;}
+    clearDiagnostic();$('#syntaxFeedback').textContent='Python sözdizimi denetleniyor…';
+    startPythonTask('check',{code:state.python});
+  }
+  function runPython(){
+    if(state.pythonRunning){notify('Python işlemi sürüyor. Durdur düğmesini kullan.');return;}
+    showPyView('output');clearDiagnostic();
+    if(!state.python.trim()){$('#pythonOutput').replaceChildren();pythonLine('Önce çalıştırılacak Python kodunu yaz.','status');return;}
+    state.pyInput=$('#pythonInput').value;
+    $('#pythonOutput').replaceChildren();$('#pythonFigures').replaceChildren();$('#pythonFigures').hidden=true;
+    startPythonTask('run',{code:state.python,stdin:state.pyInput});
+  }
+  function installPythonPackages(){
+    let packages;
+    try{packages=parsePackages($('#pythonPackages').value);}catch(e){pythonLine(e.message,'stderr');return;}
+    showPyView('output');
+    pythonLine('İstenen paketler: '+packages.join(', '),'status');
+    startPythonTask('install',{packages});
+  }
+  $('#checkPythonSyntax').addEventListener('click',checkPythonSyntax);
+  $('#pythonHealth').addEventListener('click',()=>startPythonTask('warm'));
+  $('#installPackages').addEventListener('click',installPythonPackages);
+  $('#stopPython').addEventListener('click',()=>{
+    if(pythonWorker||state.pythonRunning)stopPython();
+    else notify('Çalışan Python motoru yok.');
+  });
+  $('#pythonInput').addEventListener('input',()=>{state.pyInput=$('#pythonInput').value;});
+  // Gerçek Python izinin pedagojik olarak oynatılması (sentetik satır çalıştırma yok).
+  const missions = [
+    {title:'İlk değişkenim',subtitle:'Atama ve print()',objective:'x ile y değişkenlerini topla; sonucu 12 olarak yazdır.',
+     code:'x = 5\ny = 3\nprint(x + y)',expected:'12',hint:'y değişkeninin değerini 7 yap ve print(x + y) satırını çalıştır.'},
+    {title:'Karar ver: if / else',subtitle:'Koşullar ve karşılaştırma',objective:'puan 75 iken ekrana "Geçti" yazdır.',
+     code:'puan = 75\nif puan >= 80:\n    print("Geçti")\nelse:\n    print("Tekrar dene")',expected:'Geçti',hint:'Koşuldaki sınır değerini 70 yapmayı dene.'},
+    {title:'Döngü mutfağı',subtitle:'for ve range()',objective:'1, 2, 3, 4 sayılarını toplayıp 10 yazdır.',
+     code:'toplam = 0\nfor sayi in range(1, 4):\n    toplam += sayi\nprint(toplam)',expected:'10',hint:'range(1,5) ifadesi 1, 2, 3, 4 sayılarını üretir.'},
+    {title:'Fonksiyon tasarla',subtitle:'def ve return',objective:'kare(6) fonksiyonu 36 sonucunu versin.',
+     code:'def kare(sayi):\n    return sayi + sayi\n\nprint(kare(6))',expected:'36',hint:'Toplama yerine çarpma işlemi kullan: sayi * sayi.'},
+    {title:'Liste üzerinde çalış',subtitle:'Liste, append ve len()',objective:'Bir listeye "kiraz" ekle ve eleman sayısını 3 olarak yazdır.',
+     code:'meyveler = ["elma", "armut"]\n# Listeye yeni bir öğe ekle\nprint(len(meyveler))',expected:'3',hint:'meyveler.append("kiraz") satırını print() öncesine ekle.'},
+    {title:'Hatanın nedenini bul',subtitle:'ZeroDivisionError',objective:'Hesaplamayı güvenli hâle getir ve ekrana "Bölme yok" yazdır.',
+     code:'bolen = 0\nprint(10 / bolen)',expected:'Bölme yok',hint:'if bolen == 0: print("Bölme yok") yapısını kullan; diğer durumda böl.'}
+  ];
+  let traceResult=null,traceSource='',traceIndex=0,tracePlayTimer=null,traceView='output',currentMission=-1;
+  function showPyView(view){
+    traceView=view;
+    $$('.py-tab').forEach(b=>{const chosen=b.dataset.pyview===view;b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));});
+    $('#learningView').hidden=view!=='learn'; $('#missionsView').hidden=view!=='mission';
+    $('#pythonOutput').hidden=view!=='output';
+    $('#pythonFigures').hidden=view!=='output'||!$('#pythonFigures').querySelector('img');
+    if(view!=='learn')pauseTrace();
+    highlightTraceLine(activeDiagnostic?.line||(view==='learn'&&traceResult?.steps?.length?traceResult.steps[traceIndex].line:null));
+  }
+  $$('.py-tab').forEach(b=>b.addEventListener('click',()=>showPyView(b.dataset.pyview)));
+  function pauseTrace(){if(tracePlayTimer){clearInterval(tracePlayTimer);tracePlayTimer=null;}$('#tracePlay').textContent='Oynat';}
+  function highlightTraceLine(line){
+    const mark=$('#traceLineWash'),gutter=$('#traceGutterMark');
+    if(state.mode!=='python'||!line||!Number.isInteger(line)){mark.style.display='none';gutter.style.display='none';return;}
+    const offset=19+(line-1)*24-editor.scrollTop;
+    mark.style.top=offset+'px';gutter.style.top=offset+'px';
+    mark.style.display=offset>-27&&offset<$('.code-region').clientHeight?'block':'none';
+    gutter.style.display=offset>-27&&offset<$('.editor-gutter').clientHeight?'block':'none';
+  }
+  editor.addEventListener('scroll',()=>{if(activeDiagnostic?.line)highlightTraceLine(activeDiagnostic.line);else if(traceView==='learn'&&traceResult?.steps?.length)highlightTraceLine(traceResult.steps[traceIndex].line);});
+  function invalidateTrace(){
+    if(!traceResult)return;
+    pauseTrace();traceResult=null;traceSource='';
+    $('#traceContent').hidden=true;$('#traceEmpty').hidden=false;
+    $('#traceEmpty').innerHTML='<h3>Kod değiştirildi</h3><p>Güncel yürütme izini almak için <b>Adımları hazırla</b> düğmesine bas.</p>';
+    highlightTraceLine(null);
+  }
+  function receiveTrace(result){
+    if(!result||!Array.isArray(result.steps)){pythonLine('İzleme sonucu geçersiz.','stderr');return;}
+    traceResult=result;traceSource=state.python;traceIndex=0;
+    if(result.diagnostic)renderDiagnostic(result.diagnostic,true);
+    $('#traceEmpty').hidden=!!result.steps.length;$('#traceContent').hidden=!result.steps.length;
+    if(!result.steps.length){$('#traceEmpty').innerHTML='<h3>Çalıştırılacak satır yok</h3><p>Python koduna bir işlem ekleyip yeniden dene.</p>';}
+    if(result.steps.length){renderTraceStep(0,true);renderCodeMap();}
+    if(result.stdout)pythonLine(result.stdout);
+    if(result.error){pythonLine(result.diagnostic?result.diagnostic.title:result.error,'stderr');if(result.hint)pythonLine('Öneri: '+result.hint,'status');}
+    pythonLine(result.steps.length+' yürütme adımı kaydedildi. Adım adım öğren sekmesinde inceleyebilirsin.','status');
+    showPyView('learn');
+  }
+  function renderTraceStep(index,scroll=false,keepPlaying=false){
+    if(!traceResult?.steps?.length)return;
+    if(!keepPlaying)pauseTrace();traceIndex=Math.min(Math.max(0,Math.floor(index)),traceResult.steps.length-1);
+    const step=traceResult.steps[traceIndex], lines=traceSource.split('\n');
+    $('#traceCounter').textContent=`${traceIndex+1} / ${traceResult.steps.length}`;
+    const slider=$('#traceSlider');slider.max=traceResult.steps.length;slider.value=traceIndex+1;
+    $('#traceFocusMeta').textContent=`SATIR ${step.line} · ${traceIndex+1}. YÜRÜTME · ${step.scope}`;
+    $('#traceCodeLine').textContent=lines[step.line-1]??'';
+    $('#traceExplain').textContent=step.explain||'Python bu satırı değerlendirir.';
+    $('#traceScope').textContent=step.returned!==undefined?`Fonksiyon dönüş değeri: ${step.returned}`:
+      'Satır çalıştıktan sonra gözlenen değişkenler aşağıdadır.';
+    const changes=$('#traceVariableChanges');changes.replaceChildren();
+    const vars=Array.isArray(step.changes)?step.changes:[];
+    if(!vars.length){const p=document.createElement('p');p.style.cssText='color:#80979b;font-size:11.5px;line-height:1.6';p.textContent='Bu satırda izlenebilir bir değişken değişikliği yok.';changes.append(p);}
+    vars.forEach(diff=>{
+      const row=document.createElement('div');row.className='trace-diff';
+      const a=document.createElement('strong');a.textContent=diff.name;
+      const b=document.createElement('span');b.className='trace-before';b.textContent=diff.from;
+      const arrow=document.createElement('span');arrow.textContent='→';
+      const c=document.createElement('span');c.className='trace-after';c.textContent=diff.to;
+      row.append(a,b,arrow,c);changes.append(row);
+    });
+    const after=step.after||{}, varsNow=Object.entries(after);
+    $('#traceCurrentValues').replaceChildren();
+    const cap=document.createElement('b');cap.textContent='BU ANDAKİ DEĞERLER';$('#traceCurrentValues').append(cap);
+    const text=document.createElement('span');text.textContent=varsNow.length?varsNow.map(([k,v])=>k+' = '+v).join('  ·  '):'Henüz gösterilecek yerel değişken yok.';
+    $('#traceCurrentValues').append(text);
+    $('#traceStepOutput').textContent=step.out||'Bu adımda ekrana bir şey yazılmadı.';
+    $('#traceError').hidden=!step.error;
+    $('#traceError').textContent=step.error?step.error+'\n'+(step.hint||traceResult.hint||''):'';
+    $('#traceFirst').disabled=traceIndex===0;$('#tracePrev').disabled=traceIndex===0;
+    $('#traceNext').disabled=traceIndex>=traceResult.steps.length-1;
+    highlightTraceLine(step.line);
+    if(scroll){
+      const start=editor.value.split('\n').slice(0,step.line-1).join('\n').length+(step.line>1?1:0);
+      // Highlight the line in the editor without editing the source or moving the caret.
+      const desired=Math.max(0,19+(step.line-1)*24-editor.clientHeight/2);
+      editor.scrollTop=desired;highlightTraceLine(step.line);
+    }
+    updatePrediction();
+  }
+
+  function renderCodeMap(){
+    if(!traceResult)return;
+    const counts=new Map();
+    for(const step of traceResult.steps)counts.set(step.line,(counts.get(step.line)||0)+1);
+    const helps=traceResult.line_help||{},list=$('#traceMapList');list.replaceChildren();
+    traceSource.split('\n').forEach((line,i)=>{
+      const n=i+1,trimmed=line.trim(),count=counts.get(n)||0;
+      let help=helps[String(n)]||'';
+      if(!help){
+        if(!trimmed)help='Boş satır; okunabilirliği artırır ve çalıştırılmaz.';
+        else if(trimmed.startsWith('#'))help='Yorum satırı; Python bu açıklamayı çalıştırmaz.';
+        else if(/^else\s*:/.test(trimmed))help='Önceki koşul yanlışsa bu blok seçilir.';
+        else if(/^finally\s*:/.test(trimmed))help='Hata oluşsa da oluşmasa da bu bloğun altındaki işlemler yürütülür.';
+        else help='Üstteki ifadenin devamı veya kod bloğu. İlgili satırlarla birlikte yorumlanır.';
+      }
+      const li=document.createElement('li'),num=document.createElement('span'),code=document.createElement('span'),tag=document.createElement('span'),description=document.createElement('span');
+      num.className='code-map-num';num.textContent=n;code.className='code-map-code';code.textContent=line||' ';
+      tag.className='code-map-count'+(count?'':' unused');
+      tag.textContent=count?count+' kez yürütüldü':'Yürütülmedi';
+      description.className='code-map-help';description.textContent=help;
+      li.append(num,code,tag,description);list.append(li);
+    });
+  }
+
+  function updatePrediction(){
+    const next=traceResult?.steps?.[traceIndex+1],panel=$('#tracePredict');
+    if(!next){panel.hidden=true;return;}
+    const diff=(next.changes||[]).find(v=>v.name!=='…');
+    const out=(next.out||'').trim();
+    if(!diff&&!out){panel.hidden=true;return;}
+    panel.hidden=false;
+    panel.dataset.answer=diff?diff.to:out;
+    $('#traceQuestion').textContent=diff?`Sonraki adım (${next.line}. satır) tamamlanınca ${diff.name} değişkeninin değeri ne olacak?`:
+      `Sonraki adım (${next.line}. satır) ekrana ne yazacak?`;
+    $('#traceAnswer').value='';$('#traceFeedback').textContent='Tahminini yaz; sonra sonucu doğrula.';
+  }
+  $('#traceCheck').addEventListener('click',()=>{
+    if($('#tracePredict').hidden)return;
+    const expected=$('#tracePredict').dataset.answer.trim();
+    const actual=$('#traceAnswer').value.trim();
+    if(!actual){$('#traceFeedback').textContent='Önce bir tahmin yaz.';return;}
+    const eq=actual===expected||actual.replace(/^["']|["']$/g,'')===expected.replace(/^["']|["']$/g,'');
+    $('#traceFeedback').textContent=eq?'Doğru tahmin. Şimdi Sonraki adım ile doğrula.':`Bu kez olmadı. Bir sonraki adıma geçip değerin nasıl oluştuğunu incele.`;
+  });
+  $('#traceAnswer').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#traceCheck').click();}});
+  $('#traceFirst').addEventListener('click',()=>renderTraceStep(0,true));
+  $('#tracePrev').addEventListener('click',()=>renderTraceStep(traceIndex-1,true));
+  $('#traceNext').addEventListener('click',()=>renderTraceStep(traceIndex+1,true));
+  $('#traceSlider').addEventListener('input',()=>renderTraceStep(Number($('#traceSlider').value)-1,true));
+  $('#tracePlay').addEventListener('click',()=>{
+    if(tracePlayTimer){pauseTrace();return;}
+    if(!traceResult?.steps?.length)return;
+    if(traceIndex===traceResult.steps.length-1)renderTraceStep(0,true);
+    $('#tracePlay').textContent='Duraklat';
+    tracePlayTimer=setInterval(()=>{
+      if(traceIndex>=traceResult.steps.length-1){pauseTrace();return;}
+      // renderTraceStep intentionally pauses; resume after updating.
+      renderTraceStep(traceIndex+1,true,true);$('#tracePlay').textContent='Duraklat';
+    },Number($('#traceSpeed').value));
+  });
+  function tracePython(){
+    if(state.pythonRunning){notify('Önce mevcut Python işlemini tamamla.');return;}
+    const code=state.python;
+    if(!code.trim()){showPyView('learn');notify('Önce Python kodunu yaz.');return;}
+    clearDiagnostic();pauseTrace();traceResult=null;
+    $('#traceContent').hidden=true;$('#traceEmpty').hidden=false;
+    $('#traceEmpty').innerHTML='<h3>Gerçek yürütme kaydı hazırlanıyor</h3><p>Python kodunun çalıştığı satırlar ve değişken değişiklikleri kaydediliyor.</p>';
+    showPyView('learn');state.pyInput=$('#pythonInput').value;
+    startPythonTask('trace',{code,stdin:state.pyInput,helper:TRACE_HELPER});
+  }
+  $('#tracePython').addEventListener('click',tracePython);
+  const missionList=$('#missionList');
+  missions.forEach((item,i)=>{
+    const li=document.createElement('li'),b=document.createElement('button');b.type='button';b.dataset.mission=String(i);
+    const number=document.createElement('span');number.className='mission-number';number.textContent=String(i+1).padStart(2,'0');
+    const t=document.createElement('span');t.textContent=item.title;
+    const small=document.createElement('small');small.textContent=item.subtitle;t.append(small);
+    b.append(number,t);b.addEventListener('click',()=>selectMission(i));li.append(b);missionList.append(li);
+  });
+  function selectMission(index){
+    if(state.pythonRunning){notify('Önce çalışan işlemi durdur.');return;}
+    currentMission=index;
+    const m=missions[index];
+    $$('#missionList button').forEach((b,i)=>b.setAttribute('aria-current',String(i===index)));
+    $('#missionBody').replaceChildren();
+    const h=document.createElement('h3');h.textContent=m.title;
+    const p=document.createElement('p');p.textContent='Hedef: '+m.objective;
+    const hint=document.createElement('p');hint.textContent='İpucu: '+m.hint;
+    const b=document.createElement('button');b.className='btn primary';b.type='button';b.textContent='Başlangıç kodunu yükle';
+    const feedback=document.createElement('p');feedback.id='missionFeedback';feedback.textContent='Çözümünü kod alanında düzenleyip Çalıştır düğmesine bas. Sonra adımları incele.';
+    b.addEventListener('click',()=>{state.python=m.code;state.pyInput='';$('#pythonInput').value='';updateEditor();invalidateTrace();editor.focus();notify('Alıştırma kodu yüklendi.');});
+    $('#missionBody').append(h,p,hint,b,feedback);
+  }
+  function evaluateMission(){
+    if(currentMission<0)return;
+    const msg=$('#missionFeedback');if(!msg)return;
+    const want=missions[currentMission].expected;
+    const out=[...$('#pythonOutput').querySelectorAll('.python-out-line:not(.py-status):not(.py-error)')].map(el=>el.textContent.trim()).join('\n');
+    if(out.split('\n').some(line=>line.trim()===want))msg.textContent='Hedef çıktı ('+want+') bulundu. Sonucu hangi satırların oluşturduğunu Adım adım öğren ile incele.';
+    else msg.textContent='Hedef çıktı henüz yok. Beklenen: '+want+'. İpucunu incele ve kodu yeniden çalıştır.';
+  }
+
+  let frameRunCounter=0;
+  async function run() {
+    clearTimeout(state.timeout);
+    if (state.mode === 'python') return runPython();
+    const generation=++frameRunCounter;
+    const token='run-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    state.runId=token;
+    clearLogs();
+    $('#runState').textContent='Kod hazırlanıyor…';
+    try {
+      const html=await generateHtml(true,token);
+      if(generation!==frameRunCounter || state.mode==='python') return;
+      $('#runState').textContent='Önizleme yükleniyor…';
+      frame.srcdoc=html;
+      const activeToken=token;
+      setTimeout(()=>{
+        if(state.runId===activeToken && $('#runState').textContent==='Önizleme yükleniyor…')
+          $('#runState').textContent='Dış kütüphaneler yükleniyor olabilir';
+      },8000);
+    } catch(error) {
+      if(generation!==frameRunCounter) return;
+      const message='JavaScript dönüştürme hatası: '+String(error?.message||error);
+      logToConsole('error',message);
+      $('#runState').textContent='Derleme başarısız';
+    }
+  }
+  window.addEventListener('message', event => {
+    if (event.source !== frame.contentWindow) return;
+    const data = event.data;
+    if (!data || typeof data !== 'object' || data.channel !== 'AIHAN_PREVIEW_CONSOLE' || data.token !== state.runId) return;
+    logToConsole(data.level, typeof data.message === 'string' ? data.message.slice(0, 20000) : String(data.message));
+  });
+  $('#runButton').addEventListener('click', run);
+  $('#autoRun').addEventListener('change', e => { state.auto = e.target.checked; if (state.auto) run(); else clearTimeout(state.timeout); });
+  $('#clearConsole').addEventListener('click', clearLogs);
+  $('#consoleToggle').addEventListener('click', () => {
+    const el = $('#consoleBlock'); el.classList.toggle('collapsed');
+    $('#consoleToggle').setAttribute('aria-expanded', String(!el.classList.contains('collapsed')));
+  });
+  $$('.device-btn').forEach(btn => btn.addEventListener('click', () => {
+    $('#frameHolder').dataset.device = btn.dataset.device;
+    $$('.device-btn').forEach(b => { const active = b === btn; b.classList.toggle('active',active); b.setAttribute('aria-pressed',String(active)); });
+  }));
+
+  function notify(message) {
+    const toast = $('#toast'); toast.textContent = message; toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2300);
+  }
+  function download(name, data, mime) {
+    const blob = new Blob([data], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  async function saveActiveFile() {
+    try {
+      if (state.mode === 'python') { download('aihan-kod-mutfagi.py', state.python, 'text/x-python;charset=utf-8'); notify('Python dosyanız indirildi.'); }
+      else { download('aihan-kod-mutfagi-projem.html', await generateHtml(), 'text/html;charset=utf-8'); notify('HTML projeniz indirildi.'); }
+    } catch(error){notify('Dışa aktarma başarısız: '+error.message);}
+  }
+  $('#downloadHTML').addEventListener('click', saveActiveFile);
+  $('#newTab').addEventListener('click', async () => {
+    // Reserve the tab in the user click handler; asynchronous Babel loading must not trigger popup blocking.
+    const win=window.open('about:blank','_blank');
+    try{
+      const blob=new Blob([await generateHtml()],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      if(win)win.location.href=url;
+      else notify('Yeni sekme için açılır pencere izni verin.');
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }catch(e){if(win)win.close();notify('Yeni sekme açılamadı: '+e.message);}
+  });
+  $('#openFile').addEventListener('click', () => $('#fileInput').click());
+  $('#fileInput').addEventListener('change', async e => {
+    const file = e.target.files?.[0]; if (!file) return;
+    try {
+      if (file.size > 2_000_000) { notify('En fazla 2 MB dosya açılabilir.'); return; }
+      const text = await file.text();
+      if (/\.json$/i.test(file.name)) {
+        const obj = JSON.parse(text);
+        if (obj.format !== 'AIHAN_KOD_MUTFAGI' || !obj.split || typeof obj.single !== 'string') throw new Error('Geçersiz proje dosyası');
+        state.split = { html: String(obj.split.html || ''), css: String(obj.split.css || ''), js: String(obj.split.js || '') };
+        state.single = obj.single;
+        if (typeof obj.python === 'string') state.python = obj.python;
+        if (typeof obj.pyInput === 'string') state.pyInput = obj.pyInput;
+        state.jsMode=['auto','classic','module','jsx','tsx','ts'].includes(obj.jsMode)?obj.jsMode:'auto';
+        state.tailwind=!!obj.tailwind;
+        $('#jsFlavor').value=state.jsMode;$('#tailwindEnable').checked=state.tailwind;
+        const targetMode = ['single', 'split', 'python'].includes(obj.mode) ? obj.mode : 'split';
+        state.mode = targetMode === 'single' ? 'split' : 'single';
+        setMode(targetMode);
+      } else if (/\.(?:css|js|mjs|jsx|ts|tsx)$/i.test(file.name)) {
+        const ext=file.name.split('.').pop().toLowerCase();
+        const lang=ext==='css'?'css':'js';
+        state.split[lang]=text;
+        if(['mjs','jsx','ts','tsx'].includes(ext)){
+          state.jsMode=ext==='mjs'?'module':ext;
+          $('#jsFlavor').value=state.jsMode;
+        }
+        if(state.mode!=='split')setMode('split');
+        setLanguage(lang);
+      } else if (/\.py$/i.test(file.name)) {
+        invalidateTrace();currentMission=-1;state.python = text;
+        if (state.mode === 'python') updateEditor(); else setMode('python');
+      } else {
+        state.single = text;
+        if (state.mode === 'single') updateEditor();
+        else setMode('single');
+      }
+      if (state.mode !== 'python') run(); notify('Dosya açıldı.');
+    } catch (error) { notify('Dosya açılamadı: ' + error.message); }
+    finally { e.target.value = ''; }
+  });
+
+  function ask(title, description, content, okText = 'Devam et') {
+    $('#modalTitle').textContent = title;
+    $('#modalText').textContent = description;
+    $('#modalContents').replaceChildren();
+    if (content) $('#modalContents').append(content);
+    $('#modalOk').textContent = okText;
+    $('#modalBackdrop').classList.add('open');
+    return new Promise(resolve => { modalResolve = resolve; });
+  }
+  function settleModal(value) { $('#modalBackdrop').classList.remove('open'); if (modalResolve) { const fn = modalResolve; modalResolve = null; fn(value); } }
+  $('#modalCancel').addEventListener('click', () => settleModal(null));
+  $('#modalOk').addEventListener('click', () => settleModal(true));
+  $('#modalBackdrop').addEventListener('click', e => { if (e.target === $('#modalBackdrop')) settleModal(null); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#modalBackdrop').classList.contains('open')) settleModal(null); });
+  $('#examplesButton').addEventListener('click', async () => {
+    const isPython = state.mode === 'python';
+    const select = document.createElement('select');
+    select.style.cssText = 'width:100%;padding:12px;border:1px solid #cbdede;border-radius:9px;background:#f9fcfc;color:#254751;font-size:13px;margin-top:9px';
+    const choices = isPython ? [
+      ['starter','Python ile ilk programım'],['input','input() ile kullanıcı etkileşimi'],
+      ['data','Veri analizi ve istatistik'],['plot','Matplotlib ile grafik']
+    ] : [['starter','Merhaba Kod Mutfağı — ilk çalışma'],['counter','Etkileşimli sayaç'],['canvas','Canvas ile çizim'],['modern','Modern CSS (nesting / container queries)'],['tailwind','Tailwind CSS 4'],['vue','Vue 3 (ES Modules)'],['react','React 19 + TypeScript/TSX']];
+    choices.forEach(([value,label]) => {
+      const opt = document.createElement('option'); opt.value = value; opt.textContent = label; select.append(opt);
+    });
+    const okay = await ask('Hazır örnek yükle', isPython ? 'Örnek main.py dosyanızın üzerine yazılır. Gerekirse örnekteki input() verilerini sağdaki kutuya girin.' : 'Örnek, ayrı HTML / CSS / JS sekmelerine yerleştirilir. Mevcut ayrı sekme kodlarınızın yerini alır.', select, 'Örneği yükle');
+    if (!okay) return;
+    if (isPython) {
+      invalidateTrace();currentMission=-1;state.python = pythonSamples[select.value];
+      state.pyInput = select.value === 'input' ? 'Ayhan\n14' : '';
+      $('#pythonInput').value = state.pyInput;
+      updateEditor();
+      $('#runState').textContent = 'Çalıştır düğmesine basın';
+    } else {
+      state.split = { ...samples[select.value] };
+      state.jsMode=select.value==='react'?'tsx':(['vue'].includes(select.value)?'module':'auto');
+      state.tailwind=select.value==='tailwind';
+      $('#jsFlavor').value=state.jsMode;$('#tailwindEnable').checked=state.tailwind;
+      if (state.mode === 'split') setLanguage('html');
+      else setMode('split');
+      run();
+    }
+    notify('Örnek yüklendi.');
+  });
+  $('#clearButton').addEventListener('click', async () => {
+    const field = state.mode === 'python' ? 'main.py dosyasını' : (state.mode === 'single' ? 'tek HTML dosyasını' : state.lang.toUpperCase() + ' sekmesinin içeriğini');
+    const okay = await ask('Kod alanını temizle', `${field} silinecek. Bu işlem geri alınamaz.`, null, 'Temizle');
+    if (!okay) return;
+    setActiveCode(''); updateEditor(); scheduleRun(); editor.focus();
+  });
+  function extractFromSingle(source) {
+    const parsed = new DOMParser().parseFromString(source, 'text/html');
+    const css = [...parsed.querySelectorAll('style')].map(el => el.textContent).join('\n\n');
+    const js = [...parsed.querySelectorAll('script:not([src])')].filter(el => !el.type || /^(text\/javascript|application\/javascript|module)$/i.test(el.type)).map(el => el.textContent).join('\n\n');
+    parsed.querySelectorAll('style,script:not([src])').forEach(el => {
+      if (el.matches('style') || !el.type || /^(text\/javascript|application\/javascript|module)$/i.test(el.type)) el.remove();
+    });
+    // Haricî kütüphaneler ve meta etiketler HTML'de kalır.
+    const html = '<!DOCTYPE html>\n' + parsed.documentElement.outerHTML;
+    return { html, css, js };
+  }
+  $('#convertButton').addEventListener('click', async () => {
+    if (state.mode === 'python') return;
+    if (state.mode === 'split') {
+      try{state.single=await generateHtml();setMode('single');run();notify('Kodlar tek HTML dosyasında birleştirildi.');}
+      catch(e){notify('Kod birleştirme hatası: '+e.message);}
+    } else {
+      const okay = await ask('HTML belgesini ayrıştır', 'HTML içindeki yerleşik style ve script etiketleri CSS / JS sekmelerine taşınır. Karmaşık belgelerde ayrıştırma sonrası kodu kontrol edin.', null, 'Ayrıştır');
+      if (!okay) return;
+      state.split = extractFromSingle(state.single); setMode('split'); run(); notify('HTML, CSS ve JS sekmelerine ayrıştırıldı.');
+    }
+  });
+  function exportProject(){
+    const project={format:'AIHAN_KOD_MUTFAGI',version:3,mode:state.mode,split:state.split,
+      single:state.single,python:state.python,pyInput:state.pyInput,jsMode:state.jsMode,tailwind:state.tailwind};
+    download('AIHan_Kod_Mutfagi_Proje.json',JSON.stringify(project,null,2),'application/json;charset=utf-8');
+    notify('Düzenlenebilir proje dosyanız indirildi.');
+  }
+  $('#saveProject').addEventListener('click',exportProject);
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveActiveFile(); }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
+      e.preventDefault(); exportProject();
+    }
+  });
+
+  const grip = $('#workspaceGrip');
+  const workspace = $('#workspace');
+  let dragging = false;
+  grip.addEventListener('pointerdown', e => { dragging = true; grip.setPointerCapture(e.pointerId); e.preventDefault(); });
+  grip.addEventListener('pointermove', e => {
+    if (!dragging || matchMedia('(max-width:760px)').matches) return;
+    const bounds = workspace.getBoundingClientRect();
+    const x = e.clientX - bounds.left;
+    const percent = Math.max(30, Math.min(70, x / bounds.width * 100));
+    workspace.style.setProperty('--workspace-left', percent + '%');
+  });
+  grip.addEventListener('pointerup', () => dragging = false);
+  grip.addEventListener('pointercancel', () => dragging = false);
+  grip.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const current = parseFloat(getComputedStyle(workspace).getPropertyValue('--workspace-left')) || 52;
+    workspace.style.setProperty('--workspace-left', Math.max(30, Math.min(70, current + (e.key === 'ArrowLeft' ? -3 : 3))) + '%');
+  });
+
+  updateEditor();
+  run();
+})();
+</script>
+</body>
+</html>
