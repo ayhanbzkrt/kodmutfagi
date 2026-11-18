@@ -343,6 +343,50 @@
     #pythonPackages {max-width:300px}
     @media(max-width:760px){.web-runtime-tools{padding:7px 11px;gap:8px}.web-runtime-tools select{min-width:95px}.package-line{padding:7px 12px;gap:8px}.runtime-help{width:100%}}
     @media(max-width:480px){#saveProject{font-size:11px;min-height:31px;padding:5px 8px}.header-actions{gap:5px}}
+
+    /* Python: çıktı alanını önceliklendir, teknik araçlar ve input yanıtlarını isteğe bağlı aç. */
+    #pythonViewport { min-height:0; overflow:hidden; }
+    #pythonViewport .python-intro { padding:9px 15px; min-height:39px; gap:5px 12px; }
+    #pythonViewport .python-intro span { max-width:62%; text-align:right; overflow-wrap:anywhere; }
+    .python-settings { flex:0 0 auto; min-height:0; border-bottom:1px solid #e3eded; background:#f9fcfc; }
+    .python-settings > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 16px; cursor:pointer; font-size:11.5px; font-weight:700; color:#315d63; list-style:none; }
+    .python-settings > summary::-webkit-details-marker, .python-input-details > summary::-webkit-details-marker {display:none;}
+    .python-settings > summary:before {content:'▸'; font:14px var(--mono); color:#527c7e;}
+    .python-settings[open] > summary:before {content:'▾';}
+    .python-settings > summary .python-settings-note {margin-left:auto;font-size:10px;font-weight:400;color:#708b91;text-align:right;}
+    .python-settings-body {max-height:min(47vh,370px);overflow-y:auto;border-top:1px solid #e5eeee;}
+    #pythonViewport .py-check-tools {padding:6px 12px; gap:8px; flex:0 0 auto;}
+    #pythonViewport .py-section-tabs {padding:3px 10px; flex:0 0 auto;}
+    #pythonViewport .py-tab {padding:8px 9px;}
+    #pythonViewport .py-diagnostic {max-height:min(28vh,230px); overflow:auto; flex:0 0 auto;}
+    .python-output-heading {display:flex;align-items:center;gap:8px;justify-content:space-between;min-height:36px;padding:4px 15px;border-bottom:1px solid #e1eceb;background:#f6faf9;flex:0 0 auto;}
+    .python-output-heading strong {font-size:11.5px;color:#315e64;font-weight:730;}
+    .python-output-heading-actions {display:flex;gap:4px;}
+    .python-output-heading-actions .btn {min-height:26px;font-size:10.5px;padding:4px 8px;}
+    #pythonViewport .python-output {flex:1 1 0; min-height:130px; max-height:none; padding:13px 17px 20px; background:#fff; font-size:13px; line-height:1.8; overflow:auto;}
+    #pythonViewport .python-figures {flex:0 1 auto; min-height:0; max-height:36%;}
+    .python-input-details {flex:0 0 auto; border-top:1px solid #dce9e7;background:#f7fbfb;}
+    .python-input-details > summary {display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 15px;font-size:11.5px;font-weight:700;color:#335e65;cursor:pointer;list-style:none;}
+    .python-input-details > summary:before {content:'▸';font:14px var(--mono);color:#527c7e;}
+    .python-input-details[open] > summary:before {content:'▾';}
+    .python-input-details .python-input-summary {font-size:10.5px;font-weight:450;color:#7a9196;margin-left:auto;}
+    .python-input-details .python-input-wrap {padding:9px 15px 10px;border-top:1px solid #e2eded;}
+    .python-input-details .python-input-wrap label {display:none;}
+    .python-input-details #pythonInput {height:53px;min-height:43px;max-height:105px;resize:vertical;}
+    .python-input-details .python-hint {margin-top:5px;}
+    #pythonViewport .python-output-heading[hidden] {display:none!important;}
+    @media(max-width:760px){
+      #pythonViewport .python-intro {padding:8px 10px;}
+      #pythonViewport .python-intro span {max-width:56%;}
+      .python-settings > summary,.python-input-details > summary {padding:9px 11px;}
+      #pythonViewport .python-output {flex:1 1 auto;min-height:210px;max-height:none;overflow:auto;padding:11px 12px;}
+      #pythonViewport .python-viewport {overflow:hidden;}
+      .preview-side:has(#pythonViewport:not([hidden])) {height:75vh; min-height:540px;overflow:hidden;}
+      .preview-side:has(#pythonViewport:not([hidden])) #pythonViewport {overflow:hidden;flex:1 1 auto;}
+      .python-settings-body {max-height:30vh;}
+      #pythonViewport .python-output-heading {padding:4px 11px;}
+      .python-input-details .python-input-wrap {padding:8px 11px;}
+    }
 </style>
 </head>
 <body>
@@ -461,6 +505,9 @@
           <strong>Python 3 · Etkileşimli Kod Eğitmeni</strong>
           <span id="pythonRuntime">Python motoru henüz yüklenmedi</span>
         </div>
+        <details class="python-settings" id="pythonSettings">
+          <summary>Python motoru ve paketler <span class="python-settings-note">Gerektiğinde aç</span></summary>
+          <div class="python-settings-body">
         <div class="python-runtime-tools">
           <span class="browser-engine"><strong>Tarayıcı / Pyodide</strong><small>WebAssembly · Python kurulumu ve sunucu yok</small></span>
           <button id="pythonHealth" class="btn quiet" type="button">Python motorunu hazırla</button>
@@ -473,10 +520,12 @@
         <div class="package-line" id="pythonAutoPackages">
           <strong>Otomatik kütüphaneler</strong>
           <div class="package-progress" role="progressbar" id="pyPackProgress" aria-label="Kütüphane hazırlığı" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="pyPackBar"></span></div>
-          <span id="pyPackLabel" class="web-runtime-status">Python sekmesi açıldığında paketler hazırlanır.</span>
+          <span id="pyPackLabel" class="web-runtime-status">Paketler yalnızca gerektiğinde indirilir.</span>
           <div class="package-inline" id="pyPackBadges"></div>
         </div>
-        <div id="pythonEngineHelp" class="python-engine-help">NumPy, pandas, Matplotlib, SciPy, scikit-learn, Pillow, SymPy, Requests, Beautiful Soup ve NetworkX otomatik hazırlanır. Diğer uyumlu paketler import sırasında indirilir. İlk seferde internet ve indirme süresi gerekir; tüm masaüstü Python paketleri tarayıcıyla uyumlu değildir.</div>
+        <div id="pythonEngineHelp" class="python-engine-help">Python motoru tarayıcınızda çalışır. NumPy, pandas, Matplotlib, SciPy, scikit-learn, Pillow, SymPy, Requests, Beautiful Soup ve NetworkX gibi desteklenen paketler kodunuzda import edildiğinde indirilir. İlk kullanımda internet gerekir; masaüstündeki tüm Python paketleri WebAssembly ile uyumlu değildir.</div>
+          </div>
+        </details>
 
         <div class="py-check-tools">
           <button class="btn" type="button" id="checkPythonSyntax">Sözdizimini denetle</button>
@@ -539,15 +588,19 @@
           <ol class="mission-list" id="missionList"></ol>
           <div class="mission-body" id="missionBody"><h3>Alıştırma seç</h3><p>Yukarıdaki başlıklardan birini seçerek başla.</p></div>
         </div>
+        <div class="python-output-heading" id="pythonOutputHeading"><strong>ÇALIŞTIRMA SONUCU</strong><div class="python-output-heading-actions"><button type="button" class="btn quiet" id="copyPythonOutput">Çıktıyı kopyala</button><button type="button" class="btn quiet" id="clearPythonOutput">Temizle</button></div></div>
         <div class="python-output" id="pythonOutput" role="log" aria-live="polite">
           <div class="python-welcome">Kodunuzu yazıp <b>Çalıştır</b> düğmesine basın. print() çıktıları ve hatalar burada görüntülenecek.</div>
         </div>
         <div class="python-figures" id="pythonFigures" hidden></div>
-        <div class="python-input-wrap">
+        <details class="python-input-details" id="pythonInputDetails">
+          <summary>input() için yanıtlar <span class="python-input-summary" id="pythonInputSummary">Giriş gerekmiyorsa kapalı tutun</span></summary>
+          <div class="python-input-wrap">
           <label for="pythonInput">input() için giriş verileri <span>Her satır ayrı bir yanıt olarak okunur.</span></label>
-          <textarea id="pythonInput" rows="2" spellcheck="false" placeholder="Örnek:&#10;Ayhan&#10;14"></textarea>
-          <div class="python-hint">Python kodu cihazınızın tarayıcısında çalışır. input() yanıtlarını yukarıdaki alana her satıra bir cevap gelecek şekilde girin. Durdur işlemi Python Worker’ını kapatır; sonraki çalıştırmada motor yeniden yüklenir.</div>
-        </div>
+          <textarea id="pythonInput" rows="2" spellcheck="false" placeholder="Örn. ilk satırda ad, ikinci satırda yaş"></textarea>
+          <div class="python-hint">Her satır bir input() yanıtıdır. Girilen değerler çıktı alanını kapatmaz; ihtiyaç olmadığında bu alanı kapatabilirsiniz.</div>
+          </div>
+        </details>
       </div>
       <div class="console-block" id="consoleBlock">
         <div class="console-header">
@@ -834,7 +887,7 @@ print("Grafik oluşturuldu.")`
   function setMode(mode) {
     if (state.mode === mode) return;
     clearTimeout(state.timeout);
-    if (state.mode === 'python' && state.pythonRunning && mode !== 'python' && currentRunKind !== 'warm') stopPython('Başka bir düzenleyiciye geçildiği için Python işlemi durduruldu.');
+    if (state.mode === 'python' && state.pythonRunning && mode !== 'python') stopPython('Başka bir düzenleyiciye geçildiği için Python işlemi durduruldu.');
     state.mode = mode;
     if(mode!=='python')highlightTraceLine(null);
     const isPython = mode === 'python';
@@ -860,7 +913,7 @@ print("Grafik oluşturuldu.")`
       state.lang = 'py';
       $('#runState').textContent = state.pythonRunning ? 'Python çalışıyor…' : 'Çalıştır düğmesine basın';
       $('#pythonInput').value = state.pyInput;
-      if (!pythonWorker && !state.pythonRunning) queueMicrotask(() => { if (state.mode==='python' && !state.pythonRunning) startPythonTask('warm'); });
+      updatePythonInputSummary();
     } else {
       state.lang = 'html';
     }
@@ -1020,22 +1073,7 @@ print("Grafik oluşturuldu.")`
     let processing = Promise.resolve();
     const send = (kind,id,extra={}) => self.postMessage({kind,id,...extra});
     const bases = ['${PYODIDE_BASE}','${PYODIDE_FALLBACK}'];
-    const defaultPackages=['micropip','numpy','pandas','matplotlib','scipy','scikit-learn','pillow','sympy','requests','beautifulsoup4','networkx'];
     const PY_MODULE_PACKAGE={PIL:'pillow',sklearn:'scikit-learn',bs4:'beautifulsoup4',cv2:'opencv-python',yaml:'pyyaml',skimage:'scikit-image',dateutil:'python-dateutil',Crypto:'pycryptodome'};
-    async function preload(runtime,id){
-      const failures=[];
-      for(let i=0;i<defaultPackages.length;i++){
-        const pkg=defaultPackages[i];
-        send('package-progress',id,{name:pkg,current:i,total:defaultPackages.length,stage:'start'});
-        try{ await runtime.loadPackage(pkg);
-          send('package-progress',id,{name:pkg,current:i+1,total:defaultPackages.length,stage:'ok'});
-        }catch(e){
-          failures.push(pkg);
-          send('package-progress',id,{name:pkg,current:i+1,total:defaultPackages.length,stage:'fail',error:String(e?.message||e).slice(0,180)});
-        }
-      }
-      return failures;
-    }
     async function autoLoadImports(runtime,code,id){
       send('status',id,{message:'Kodun kullandığı Python kütüphaneleri denetleniyor…'});
       await runtime.loadPackagesFromImports(code);
@@ -1076,9 +1114,8 @@ print("Grafik oluşturuldu.")`
         runtime.setStdout({batched:v=>send('out',id,{message:String(v).slice(0,50000)})});
         runtime.setStderr({batched:v=>send('err',id,{message:String(v).slice(0,50000)})});
         if(kind==='ready' || kind==='warm'){
-          send('status',id,{message:'Temel Python kütüphaneleri otomatik hazırlanıyor…'});
-          const failures=await preload(runtime,id);
-          send('done',id,{ok:true,preloadFailures:failures});return;
+          send('status',id,{message:'Python motoru hazır · kütüphaneler kullanım sırasında yüklenir'});
+          send('done',id,{ok:true,preloadFailures:[]});return;
         }
         if(kind==='check') {
           runtime.globals.set('_aihan_source',String(code));
@@ -1098,7 +1135,7 @@ print("Grafik oluşturuldu.")`
         await runtime.runPythonAsync(diagnostics+'\nimport json\n_aihan_check_payload=json.dumps(check_syntax(_aihan_source),ensure_ascii=False)');
         const syntax=JSON.parse(runtime.globals.get('_aihan_check_payload'));
         if(!syntax.ok){send('diagnostic',id,{diagnostic:syntax.diagnostic});send('done',id,{ok:false});return;}
-        const stdinLines=String(stdin).split(/\r?\n/);
+        const stdinLines=String(stdin).length ? String(stdin).split(/\r?\n/) : [];
         runtime.setStdin({stdin:()=>stdinLines.length?stdinLines.shift():null,autoEOF:true});
         send('status',id,{message:'Kullanılan Python paketleri kontrol ediliyor…'});
         await autoLoadImports(runtime,code,id);
@@ -1108,7 +1145,8 @@ print("Grafik oluşturuldu.")`
           send('status',id,{message:'Satırların gerçek yürütme kaydı hazırlanıyor…'});
           runtime.globals.set('_aihan_trace_source',String(code));
           runtime.globals.set('_aihan_trace_input',String(stdin));
-          await runtime.runPythonAsync(helper+'\n_aihan_trace_result=json.dumps(trace_run(_aihan_trace_source,_aihan_trace_input),ensure_ascii=False)');
+          const safeHelper=helper.replace(/\nif __name__ == ['"]__main__['"]:\n[ \t]*cli\(\)[ \t]*$/, '');
+          await runtime.runPythonAsync(safeHelper+'\n_aihan_trace_result=json.dumps(trace_run(_aihan_trace_source,_aihan_trace_input),ensure_ascii=False)');
           const res=JSON.parse(runtime.globals.get('_aihan_trace_result'));
           send('trace',id,{result:res});send('done',id,{ok:!!res.ok});return;
         }
@@ -1277,7 +1315,14 @@ print("Grafik oluşturuldu.")`
         else pythonLine('Kod değiştirildi; eski yürütme kaydı gösterilmedi.','status');
       }
       else if(data.kind==='diagnostic'){
-        if(state.python===pendingCode)renderDiagnostic(data.diagnostic,true);
+        if(state.python===pendingCode){
+          renderDiagnostic(data.diagnostic,true);
+          if(currentRunKind==='run'){
+            const info=data.diagnostic||{};
+            const where=Number.isInteger(info.line)?' · Satır '+info.line:'';
+            pythonLine((info.title||'Python hatası')+where+'\n'+(info.suggestion||info.explanation||'Kodunuzu kontrol edin.'),'stderr');
+          }
+        }
       }
       else if(data.kind==='check'){
         if(state.python===pendingCode){
@@ -1288,8 +1333,8 @@ print("Grafik oluşturuldu.")`
       else if(data.kind==='done'){
         if(currentRunKind==='ready'||currentRunKind==='warm'){
           const missed=(data.preloadFailures||[]);
-          pythonLine('Python hazır. '+(missed.length?'Bazı isteğe bağlı paketler yüklenemedi: '+missed.join(', '):'Otomatik Python kütüphaneleri hazır.'),'status');
-          if(!missed.length)$('#pyPackLabel').textContent='Otomatik kütüphaneler hazır';
+          pythonLine('Python motoru hazır. Kütüphaneler import edildiğinde otomatik yüklenir.','status');
+          $('#pyPackLabel').textContent='Paketler gerektiğinde yüklenir';
         }
         if(currentRunKind==='install'&&data.ok)pythonLine('Uyumlu paket kuruldu; şimdi kodunu çalıştırabilirsin.','status');
         finishPython(!!data.ok);
@@ -1330,7 +1375,7 @@ print("Grafik oluşturuldu.")`
     const id=++state.pyRunNumber;
     for(const key of ['runButton','installPackages','checkPythonSyntax','pythonHealth','tracePython'])$('#'+key).disabled=true;
     $('#stopPython').textContent='Durdur';
-    setPythonStatus(kind==='warm'?'Python ve kütüphaneler ilk kullanım için hazırlanıyor…':engineReady?'Python hazırlanıyor…':'Pyodide başlatılıyor…');
+    setPythonStatus(kind==='warm'?'Python motoru hazırlanıyor…':engineReady?'Python kodu hazırlanıyor…':'Pyodide başlatılıyor…');
     startRunTimeout(id);
     try{
       makePythonWorker().postMessage({kind,id,...payload,diagnostics:DIAGNOSTICS_HELPER});
@@ -1347,7 +1392,9 @@ print("Grafik oluşturuldu.")`
     showPyView('output');clearDiagnostic();
     if(!state.python.trim()){$('#pythonOutput').replaceChildren();pythonLine('Önce çalıştırılacak Python kodunu yaz.','status');return;}
     state.pyInput=$('#pythonInput').value;
+    if(!/\binput\s*\(/.test(state.python))$('#pythonInputDetails').open=false;
     $('#pythonOutput').replaceChildren();$('#pythonFigures').replaceChildren();$('#pythonFigures').hidden=true;
+    pythonLine('Çalıştırılıyor…','status');
     startPythonTask('run',{code:state.python,stdin:state.pyInput});
   }
   function installPythonPackages(){
@@ -1364,7 +1411,25 @@ print("Grafik oluşturuldu.")`
     if(pythonWorker||state.pythonRunning)stopPython();
     else notify('Çalışan Python motoru yok.');
   });
-  $('#pythonInput').addEventListener('input',()=>{state.pyInput=$('#pythonInput').value;});
+  function updatePythonInputSummary(){
+    const lines=$('#pythonInput').value.replace(/\r/g,'').split('\n').filter(line=>line.length>0);
+    $('#pythonInputSummary').textContent=lines.length?lines.length+' giriş yanıtı hazır':'Giriş gerekmiyorsa kapalı tutun';
+  }
+  $('#pythonInput').addEventListener('input',()=>{state.pyInput=$('#pythonInput').value;updatePythonInputSummary();});
+  $('#clearPythonOutput').addEventListener('click',()=>{
+    $('#pythonOutput').replaceChildren();$('#pythonFigures').replaceChildren();$('#pythonFigures').hidden=true;
+  });
+  $('#copyPythonOutput').addEventListener('click',async()=>{
+    const output=[...$('#pythonOutput').querySelectorAll('.python-out-line')].map(el=>el.textContent).join('\n');
+    if(!output){notify('Kopyalanacak Python çıktısı yok.');return;}
+    try{
+      if(!navigator.clipboard?.writeText)throw Error('clipboard unavailable');
+      await navigator.clipboard.writeText(output);notify('Python çıktısı kopyalandı.');
+    }catch(e){
+      const temp=document.createElement('textarea');temp.value=output;temp.style.position='fixed';temp.style.left='-9999px';document.body.append(temp);temp.select();
+      const copied=document.execCommand('copy');temp.remove();notify(copied?'Python çıktısı kopyalandı.':'Tarayıcı kopyalamayı engelledi; çıktıyı elle seçebilirsiniz.');
+    }
+  });
   // Gerçek Python izinin pedagojik olarak oynatılması (sentetik satır çalıştırma yok).
   const missions = [
     {title:'İlk değişkenim',subtitle:'Atama ve print()',objective:'x ile y değişkenlerini topla; sonucu 12 olarak yazdır.',
@@ -1385,7 +1450,7 @@ print("Grafik oluşturuldu.")`
     traceView=view;
     $$('.py-tab').forEach(b=>{const chosen=b.dataset.pyview===view;b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));});
     $('#learningView').hidden=view!=='learn'; $('#missionsView').hidden=view!=='mission';
-    $('#pythonOutput').hidden=view!=='output';
+    $('#pythonOutput').hidden=view!=='output'; $('#pythonOutputHeading').hidden=view!=='output';
     $('#pythonFigures').hidden=view!=='output'||!$('#pythonFigures').querySelector('img');
     if(view!=='learn')pauseTrace();
     highlightTraceLine(activeDiagnostic?.line||(view==='learn'&&traceResult?.steps?.length?traceResult.steps[traceIndex].line:null));
@@ -1552,7 +1617,7 @@ print("Grafik oluşturuldu.")`
     const hint=document.createElement('p');hint.textContent='İpucu: '+m.hint;
     const b=document.createElement('button');b.className='btn primary';b.type='button';b.textContent='Başlangıç kodunu yükle';
     const feedback=document.createElement('p');feedback.id='missionFeedback';feedback.textContent='Çözümünü kod alanında düzenleyip Çalıştır düğmesine bas. Sonra adımları incele.';
-    b.addEventListener('click',()=>{state.python=m.code;state.pyInput='';$('#pythonInput').value='';updateEditor();invalidateTrace();editor.focus();notify('Alıştırma kodu yüklendi.');});
+    b.addEventListener('click',()=>{state.python=m.code;state.pyInput='';$('#pythonInput').value='';updatePythonInputSummary();$('#pythonInputDetails').open=false;updateEditor();invalidateTrace();editor.focus();notify('Alıştırma kodu yüklendi.');});
     $('#missionBody').append(h,p,hint,b,feedback);
   }
   function evaluateMission(){
@@ -1710,6 +1775,8 @@ print("Grafik oluşturuldu.")`
       invalidateTrace();currentMission=-1;state.python = pythonSamples[select.value];
       state.pyInput = select.value === 'input' ? 'Ayhan\n14' : '';
       $('#pythonInput').value = state.pyInput;
+      updatePythonInputSummary();
+      $('#pythonInputDetails').open = select.value === 'input';
       updateEditor();
       $('#runState').textContent = 'Çalıştır düğmesine basın';
     } else {
